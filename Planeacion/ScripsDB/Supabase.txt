@@ -1,0 +1,1318 @@
+/* =============================================================
+   SCRIPT UNIFICADO - DATA_GOAL (CORREGIDO PARA SSMS)
+   Generado: 2026-02-27
+
+   NOTA: Este script ELIMINA y RECREA la BD DATA_GOAL.
+============================================================= */
+
+-- =============================================================
+-- 0) RECREAR BASE DE DATOS (evita errores por objetos existentes)
+-- =============================================================
+USE master;
+GO
+
+IF DB_ID('DATA_GOAL') IS NOT NULL
+BEGIN
+    ALTER DATABASE DATA_GOAL SET SINGLE_USER WITH ROLLBACK IMMEDIATE;
+    DROP DATABASE DATA_GOAL;
+END
+GO
+
+CREATE DATABASE DATA_GOAL;
+GO
+
+USE DATA_GOAL;
+GO
+
+/* ============================================================
+   1) ESQUEMAS Y TABLAS (sin duplicados, sin inserts de prueba)
+============================================================ */
+
+-- Esquemas
+CREATE SCHEMA seguridad;
+GO
+CREATE SCHEMA academico;
+GO
+CREATE SCHEMA personal;
+GO
+CREATE SCHEMA competencia;
+GO
+CREATE SCHEMA rendimiento;
+GO
+CREATE SCHEMA financiero;
+GO
+CREATE SCHEMA auditoria;
+GO
+
+-- seguridad.roles (corregido: solo una vez)
+CREATE TABLE seguridad.roles (
+    IdRol INT IDENTITY PRIMARY KEY,
+    NombreRol VARCHAR(50) NOT NULL UNIQUE,
+    Descripcion VARCHAR(200),
+    Activo BIT NOT NULL DEFAULT 1
+);
+GO
+
+-- seguridad.usuarios
+CREATE TABLE seguridad.usuarios (
+    IdUsuario INT IDENTITY PRIMARY KEY,
+    PrimerNombre VARCHAR(100) NOT NULL,
+    SegundoNombre VARCHAR(100),
+    PrimerApellido VARCHAR(100) NOT NULL,
+    SegundoApellido VARCHAR(100),
+    Correo VARCHAR(150) NOT NULL UNIQUE,
+    Telefono VARCHAR(20),
+    PasswordHash VARCHAR(255) NOT NULL,
+    IdRol INT NOT NULL,
+    FechaCreacion DATETIME NOT NULL DEFAULT GETDATE(),
+    Activo BIT NOT NULL DEFAULT 1,
+
+    CONSTRAINT FK_Usuario_Rol
+        FOREIGN KEY (IdRol) REFERENCES seguridad.roles(IdRol),
+
+    -- Check básico (luego agregamos uno más estricto)
+    CONSTRAINT CK_Correo_Formato
+        CHECK (Correo LIKE '%@%.%')
+);
+GO
+
+-- academico.categorias
+CREATE TABLE academico.categorias (
+    IdCategoria INT IDENTITY PRIMARY KEY,
+    NombreCategoria VARCHAR(100) NOT NULL UNIQUE,
+    EdadMin INT NOT NULL,
+    EdadMax INT NOT NULL,
+
+    CONSTRAINT CK_Edades CHECK (EdadMin >= 4 AND EdadMax <= 25 AND EdadMin < EdadMax)
+);
+GO
+
+-- academico.posiciones
+CREATE TABLE academico.posiciones (
+    IdPosicion INT IDENTITY PRIMARY KEY,
+    NombrePosicion VARCHAR(50) NOT NULL UNIQUE
+);
+GO
+
+-- academico.temporadas
+CREATE TABLE academico.temporadas (
+    IdTemporada INT IDENTITY PRIMARY KEY,
+    AnioInicio INT NOT NULL,
+    AnioFin INT NOT NULL,
+    Activa BIT NOT NULL DEFAULT 1,
+
+    CONSTRAINT CK_Temporada CHECK (AnioFin = AnioInicio + 1)
+);
+GO
+
+-- personal.jugadores
+CREATE TABLE personal.jugadores (
+    IdJugador INT IDENTITY PRIMARY KEY,
+    IdUsuario INT NOT NULL UNIQUE,
+    IdCategoria INT NOT NULL,
+    IdPosicion INT NOT NULL,
+    FechaIngreso DATE NOT NULL DEFAULT GETDATE(),
+    Activo BIT NOT NULL DEFAULT 1,
+
+    FOREIGN KEY (IdUsuario) REFERENCES seguridad.usuarios(IdUsuario),
+    FOREIGN KEY (IdCategoria) REFERENCES academico.categorias(IdCategoria),
+    FOREIGN KEY (IdPosicion) REFERENCES academico.posiciones(IdPosicion)
+);
+GO
+
+-- personal.entrenadores
+CREATE TABLE personal.entrenadores (
+    IdEntrenador INT IDENTITY PRIMARY KEY,
+    IdUsuario INT NOT NULL UNIQUE,
+    Especialidad VARCHAR(100),
+    FechaContratacion DATE NOT NULL,
+    Activo BIT NOT NULL DEFAULT 1,
+
+    FOREIGN KEY (IdUsuario) REFERENCES seguridad.usuarios(IdUsuario)
+);
+GO
+
+-- competencia.equipos
+CREATE TABLE competencia.equipos (
+    IdEquipo INT IDENTITY PRIMARY KEY,
+    Nombre VARCHAR(100) NOT NULL,
+    IdCategoria INT NOT NULL,
+    FechaCreacion DATE NOT NULL DEFAULT GETDATE(),
+    Activo BIT NOT NULL DEFAULT 1,
+
+    CONSTRAINT UQ_Equipo UNIQUE (Nombre, IdCategoria),
+
+    FOREIGN KEY (IdCategoria) REFERENCES academico.categorias(IdCategoria)
+);
+GO
+
+-- competencia.jugador_equipo
+CREATE TABLE competencia.jugador_equipo (
+    IdJugadorEquipo INT IDENTITY PRIMARY KEY,
+    IdJugador INT NOT NULL,
+    IdEquipo INT NOT NULL,
+    FechaIngreso DATE NOT NULL,
+    FechaSalida DATE,
+
+    FOREIGN KEY (IdJugador) REFERENCES personal.jugadores(IdJugador),
+    FOREIGN KEY (IdEquipo) REFERENCES competencia.equipos(IdEquipo),
+
+    CONSTRAINT CK_Fechas_Equipo CHECK (FechaSalida IS NULL OR FechaSalida > FechaIngreso)
+);
+GO
+
+-- competencia.torneos
+CREATE TABLE competencia.torneos (
+    IdTorneo INT IDENTITY PRIMARY KEY,
+    Nombre VARCHAR(150) NOT NULL,
+    Tipo VARCHAR(50) NOT NULL,
+    FechaInicio DATE NOT NULL,
+    FechaFin DATE NOT NULL,
+    IdTemporada INT NOT NULL,
+
+    FOREIGN KEY (IdTemporada) REFERENCES academico.temporadas(IdTemporada),
+
+    CONSTRAINT CK_Fechas_Torneo CHECK (FechaFin > FechaInicio)
+);
+GO
+
+-- competencia.partidos
+CREATE TABLE competencia.partidos (
+    IdPartido INT IDENTITY PRIMARY KEY,
+    IdTorneo INT NOT NULL,
+    Fecha DATE NOT NULL,
+    Hora TIME NOT NULL,
+    Lugar VARCHAR(150),
+    Resultado VARCHAR(20),
+
+    FOREIGN KEY (IdTorneo) REFERENCES competencia.torneos(IdTorneo)
+);
+GO
+
+-- rendimiento.tipo_entrenamiento
+CREATE TABLE rendimiento.tipo_entrenamiento (
+    IdTipoEntrenamiento INT IDENTITY PRIMARY KEY,
+    Nombre VARCHAR(100) NOT NULL UNIQUE
+);
+GO
+
+-- rendimiento.entrenamientos
+CREATE TABLE rendimiento.entrenamientos (
+    IdEntrenamiento INT IDENTITY PRIMARY KEY,
+    Fecha DATE NOT NULL,
+    HoraInicio TIME NOT NULL,
+    HoraFin TIME NOT NULL,
+    Lugar VARCHAR(150),
+    IdEntrenador INT NOT NULL,
+    IdTipoEntrenamiento INT NOT NULL,
+
+    FOREIGN KEY (IdEntrenador) REFERENCES personal.entrenadores(IdEntrenador),
+    FOREIGN KEY (IdTipoEntrenamiento) REFERENCES rendimiento.tipo_entrenamiento(IdTipoEntrenamiento),
+
+    CONSTRAINT CK_Horas CHECK (HoraFin > HoraInicio)
+);
+GO
+
+-- rendimiento.asistencias
+CREATE TABLE rendimiento.asistencias (
+    IdAsistencia INT IDENTITY PRIMARY KEY,
+    IdEntrenamiento INT NOT NULL,
+    IdJugador INT NOT NULL,
+    Estado VARCHAR(20) NOT NULL,
+
+    FOREIGN KEY (IdEntrenamiento) REFERENCES rendimiento.entrenamientos(IdEntrenamiento),
+    FOREIGN KEY (IdJugador) REFERENCES personal.jugadores(IdJugador),
+
+    CONSTRAINT CK_Estado CHECK (Estado IN ('Presente','Ausente','Justificado'))
+);
+GO
+
+-- rendimiento.estadisticas_jugador
+CREATE TABLE rendimiento.estadisticas_jugador (
+    IdEstadistica INT IDENTITY PRIMARY KEY,
+    IdJugador INT NOT NULL,
+    Goles INT NOT NULL DEFAULT 0,
+    Asistencias INT NOT NULL DEFAULT 0,
+    TarjetasAmarillas INT NOT NULL DEFAULT 0,
+    TarjetasRojas INT NOT NULL DEFAULT 0,
+
+    FOREIGN KEY (IdJugador) REFERENCES personal.jugadores(IdJugador),
+
+    CONSTRAINT CK_Estadisticas CHECK (Goles >= 0 AND Asistencias >= 0)
+);
+GO
+
+-- financiero.conceptos_pago
+CREATE TABLE financiero.conceptos_pago (
+    IdConcepto INT IDENTITY PRIMARY KEY,
+    NombreConcepto VARCHAR(100) NOT NULL UNIQUE,
+    MontoBase DECIMAL(10,2) NOT NULL,
+    EsRecurrente BIT NOT NULL DEFAULT 0,
+    Activo BIT NOT NULL DEFAULT 1,
+
+    CONSTRAINT CK_Monto CHECK (MontoBase > 0)
+);
+GO
+
+-- financiero.facturas
+CREATE TABLE financiero.facturas (
+    IdFactura INT IDENTITY PRIMARY KEY,
+    IdJugador INT NOT NULL,
+    FechaEmision DATE NOT NULL DEFAULT GETDATE(),
+    FechaVencimiento DATE NOT NULL,
+    Estado VARCHAR(20) NOT NULL DEFAULT 'Pendiente',
+
+    FOREIGN KEY (IdJugador) REFERENCES personal.jugadores(IdJugador),
+
+    CONSTRAINT CK_EstadoFactura CHECK (Estado IN ('Pendiente','Pagada','Vencida')),
+    CONSTRAINT CK_Vencimiento CHECK (FechaVencimiento >= FechaEmision)
+);
+GO
+
+-- financiero.pagos
+CREATE TABLE financiero.pagos (
+    IdPago INT IDENTITY PRIMARY KEY,
+    IdFactura INT NOT NULL,
+    FechaPago DATE NOT NULL DEFAULT GETDATE(),
+    MontoPagado DECIMAL(10,2) NOT NULL,
+
+    FOREIGN KEY (IdFactura) REFERENCES financiero.facturas(IdFactura),
+
+    CONSTRAINT CK_MontoPago CHECK (MontoPagado > 0)
+);
+GO
+
+/* ============================================================
+   2) RESTRICCIONES ADICIONALES (sin duplicados)
+============================================================ */
+
+ALTER TABLE seguridad.usuarios
+ADD CONSTRAINT CK_Usuarios_Correo_Formato
+CHECK (
+    Correo LIKE '%_@_%._%'
+    AND Correo NOT LIKE '% %'
+);
+GO
+
+ALTER TABLE seguridad.usuarios
+ADD CONSTRAINT CK_Usuarios_Telefono
+CHECK (
+    Telefono IS NULL
+    OR (Telefono NOT LIKE '%[^0-9]%' AND LEN(Telefono) BETWEEN 7 AND 15)
+);
+GO
+
+ALTER TABLE seguridad.usuarios
+ADD CONSTRAINT CK_Usuarios_Password
+CHECK (LEN(PasswordHash) >= 8);
+GO
+
+ALTER TABLE personal.jugadores
+ADD CONSTRAINT CK_Jugador_FechaIngreso
+CHECK (FechaIngreso <= GETDATE());
+GO
+
+ALTER TABLE competencia.partidos
+ADD CONSTRAINT CK_Partido_Resultado
+CHECK (
+    Resultado IS NULL
+    OR Resultado LIKE '[0-9]%-[0-9]%'
+);
+GO
+
+ALTER TABLE rendimiento.estadisticas_jugador
+ADD CONSTRAINT CK_Estadisticas_NoNegativas
+CHECK (
+    Goles >= 0
+    AND Asistencias >= 0
+    AND TarjetasAmarillas >= 0
+    AND TarjetasRojas >= 0
+);
+GO
+
+ALTER TABLE rendimiento.entrenamientos
+ADD CONSTRAINT CK_Entrenamiento_Fecha
+CHECK (
+    Fecha BETWEEN '2020-01-01' AND DATEADD(YEAR, 1, GETDATE())
+);
+GO
+
+ALTER TABLE financiero.pagos
+ADD CONSTRAINT CK_Pagos_MontoMaximo
+CHECK (MontoPagado BETWEEN 1 AND 10000000);
+GO
+
+ALTER TABLE financiero.pagos
+ADD CONSTRAINT CK_Pago_Fecha
+CHECK (FechaPago <= GETDATE());
+GO
+
+ALTER TABLE financiero.facturas
+ADD CONSTRAINT CK_Factura_FechaEmision
+CHECK (FechaEmision <= GETDATE());
+GO
+
+ALTER TABLE financiero.facturas
+ADD CONSTRAINT CK_Factura_RangoVencimiento
+CHECK (
+    FechaVencimiento <= DATEADD(YEAR, 1, FechaEmision)
+);
+GO
+
+ALTER TABLE competencia.jugador_equipo
+ADD CONSTRAINT UQ_Jugador_Equipo
+UNIQUE (IdJugador, IdEquipo);
+GO
+
+ALTER TABLE financiero.pagos
+ADD CONSTRAINT CK_Pago_MayorCero
+CHECK (MontoPagado > 0);
+GO
+
+ALTER TABLE academico.categorias
+ADD CONSTRAINT CK_Categoria_Edad
+CHECK (EdadMin < EdadMax);
+GO
+
+ALTER TABLE financiero.facturas
+ADD CONSTRAINT CK_Factura_Estado
+CHECK (Estado IN ('Pendiente','Pagada','Vencida'));
+GO
+
+ALTER TABLE rendimiento.entrenamientos
+ADD CONSTRAINT CK_Entrenamiento_Hora
+CHECK (HoraFin > HoraInicio);
+GO
+
+ALTER TABLE competencia.torneos
+ADD CONSTRAINT CK_Torneo_Fechas
+CHECK (FechaFin >= FechaInicio);
+GO
+
+/* ============================================================
+   3) ÍNDICES (con IF NOT EXISTS para evitar errores)
+============================================================ */
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_Usuarios_Correo' AND object_id = OBJECT_ID('seguridad.usuarios'))
+    CREATE NONCLUSTERED INDEX IX_Usuarios_Correo ON seguridad.usuarios (Correo);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_Usuarios_IdRol' AND object_id = OBJECT_ID('seguridad.usuarios'))
+    CREATE NONCLUSTERED INDEX IX_Usuarios_IdRol ON seguridad.usuarios (IdRol);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_Jugadores_IdUsuario' AND object_id = OBJECT_ID('personal.jugadores'))
+    CREATE NONCLUSTERED INDEX IX_Jugadores_IdUsuario ON personal.jugadores (IdUsuario);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_Jugadores_IdCategoria' AND object_id = OBJECT_ID('personal.jugadores'))
+    CREATE NONCLUSTERED INDEX IX_Jugadores_IdCategoria ON personal.jugadores (IdCategoria);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_Entrenadores_IdUsuario' AND object_id = OBJECT_ID('personal.entrenadores'))
+    CREATE NONCLUSTERED INDEX IX_Entrenadores_IdUsuario ON personal.entrenadores (IdUsuario);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_Equipos_IdCategoria' AND object_id = OBJECT_ID('competencia.equipos'))
+    CREATE NONCLUSTERED INDEX IX_Equipos_IdCategoria ON competencia.equipos (IdCategoria);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_JugadorEquipo_IdEquipo_IdJugador' AND object_id = OBJECT_ID('competencia.jugador_equipo'))
+    CREATE NONCLUSTERED INDEX IX_JugadorEquipo_IdEquipo_IdJugador ON competencia.jugador_equipo (IdEquipo, IdJugador);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_Partidos_IdTorneo' AND object_id = OBJECT_ID('competencia.partidos'))
+    CREATE NONCLUSTERED INDEX IX_Partidos_IdTorneo ON competencia.partidos (IdTorneo);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_Partidos_Fecha' AND object_id = OBJECT_ID('competencia.partidos'))
+    CREATE NONCLUSTERED INDEX IX_Partidos_Fecha ON competencia.partidos (Fecha);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_Asistencias_IdEntrenamiento' AND object_id = OBJECT_ID('rendimiento.asistencias'))
+    CREATE NONCLUSTERED INDEX IX_Asistencias_IdEntrenamiento ON rendimiento.asistencias (IdEntrenamiento);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_Asistencias_IdJugador' AND object_id = OBJECT_ID('rendimiento.asistencias'))
+    CREATE NONCLUSTERED INDEX IX_Asistencias_IdJugador ON rendimiento.asistencias (IdJugador);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_Estadisticas_IdJugador' AND object_id = OBJECT_ID('rendimiento.estadisticas_jugador'))
+    CREATE NONCLUSTERED INDEX IX_Estadisticas_IdJugador ON rendimiento.estadisticas_jugador (IdJugador);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_Entrenamientos_Fecha' AND object_id = OBJECT_ID('rendimiento.entrenamientos'))
+    CREATE NONCLUSTERED INDEX IX_Entrenamientos_Fecha ON rendimiento.entrenamientos (Fecha);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_Facturas_IdJugador' AND object_id = OBJECT_ID('financiero.facturas'))
+    CREATE NONCLUSTERED INDEX IX_Facturas_IdJugador ON financiero.facturas (IdJugador);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_Facturas_Estado' AND object_id = OBJECT_ID('financiero.facturas'))
+    CREATE NONCLUSTERED INDEX IX_Facturas_Estado ON financiero.facturas (Estado);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_Facturas_FechaVencimiento' AND object_id = OBJECT_ID('financiero.facturas'))
+    CREATE NONCLUSTERED INDEX IX_Facturas_FechaVencimiento ON financiero.facturas (FechaVencimiento);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_Pagos_IdFactura' AND object_id = OBJECT_ID('financiero.pagos'))
+    CREATE NONCLUSTERED INDEX IX_Pagos_IdFactura ON financiero.pagos (IdFactura);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_Pagos_FechaPago' AND object_id = OBJECT_ID('financiero.pagos'))
+    CREATE NONCLUSTERED INDEX IX_Pagos_FechaPago ON financiero.pagos (FechaPago);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_Facturas_Jugador_Estado' AND object_id = OBJECT_ID('financiero.facturas'))
+    CREATE NONCLUSTERED INDEX IX_Facturas_Jugador_Estado
+    ON financiero.facturas (IdJugador, Estado)
+    INCLUDE (FechaEmision, FechaVencimiento);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_Usuarios_Apellido' AND object_id = OBJECT_ID('seguridad.usuarios'))
+    CREATE NONCLUSTERED INDEX IX_Usuarios_Apellido ON seguridad.usuarios (PrimerApellido);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_Usuarios_NombreCompleto' AND object_id = OBJECT_ID('seguridad.usuarios'))
+    CREATE NONCLUSTERED INDEX IX_Usuarios_NombreCompleto ON seguridad.usuarios (PrimerNombre, PrimerApellido);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_JugadorEquipo_IdJugador' AND object_id = OBJECT_ID('competencia.jugador_equipo'))
+    CREATE NONCLUSTERED INDEX IX_JugadorEquipo_IdJugador ON competencia.jugador_equipo (IdJugador);
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.indexes WHERE name='IX_Asistencias_Jugador_Entrenamiento' AND object_id = OBJECT_ID('rendimiento.asistencias'))
+    CREATE NONCLUSTERED INDEX IX_Asistencias_Jugador_Entrenamiento ON rendimiento.asistencias (IdJugador, IdEntrenamiento);
+GO
+
+
+/* ============================================================
+   4) DATOS SINTÉTICOS (corregido: teléfonos y sin TRUNCATE)
+============================================================ */
+
+INSERT INTO seguridad.roles (NombreRol, Descripcion)
+VALUES
+('Administrador','Control total'),
+('Coordinador','Gestión académica'),
+('Entrenador','Gestión deportiva'),
+('Auxiliar','Apoyo administrativo'),
+('Jugador','Usuario jugador');
+GO
+
+-- Teléfonos corregidos: solo dígitos (para pasar CK_Usuarios_Telefono)
+INSERT INTO seguridad.usuarios
+(PrimerNombre,PrimerApellido,Correo,PasswordHash,Telefono,IdRol)
+VALUES
+('Laura','Gomez','admin@datagoal.com','Admin1234','3001111111',1),
+('Carlos','Mendez','cmendez@datagoal.com','Coach1234','3002222222',3),
+('Andres','Lopez','alopez@datagoal.com','Coach5678','3003333333',3),
+
+('Mateo','Ramirez','mateo1@datagoal.com','Jugador123','3011111111',5),
+('Daniel','Suarez','daniel2@datagoal.com','Jugador123','3011111112',5),
+('Santiago','Torres','santiago3@datagoal.com','Jugador123','3011111113',5),
+('Lucas','Castro','lucas4@datagoal.com','Jugador123','3011111114',5),
+('Samuel','Rios','samuel5@datagoal.com','Jugador123','3011111115',5),
+('Nicolas','Vega','nicolas6@datagoal.com','Jugador123','3011111116',5),
+('Sebastian','Ortega','sebastian7@datagoal.com','Jugador123','3011111117',5),
+('David','Morales','david8@datagoal.com','Jugador123','3011111118',5),
+('Juan','Herrera','juan9@datagoal.com','Jugador123','3011111119',5),
+('Emilio','Navarro','emilio10@datagoal.com','Jugador123','3011111120',5);
+GO
+
+INSERT INTO academico.categorias (NombreCategoria,EdadMin,EdadMax)
+VALUES
+('Sub-10',8,10),
+('Sub-13',11,13),
+('Sub-17',14,17),
+('Sub-20',18,20);
+GO
+
+INSERT INTO academico.posiciones (NombrePosicion)
+VALUES
+('Portero'),
+('Defensa'),
+('Mediocampista'),
+('Delantero');
+GO
+
+INSERT INTO academico.temporadas (AnioInicio,AnioFin)
+VALUES (2025,2026);
+GO
+
+INSERT INTO personal.entrenadores
+(IdUsuario,Especialidad,FechaContratacion)
+VALUES
+(2,'Táctico','2023-01-10'),
+(3,'Preparador Físico','2024-02-15');
+GO
+
+INSERT INTO personal.jugadores
+(IdUsuario,IdCategoria,IdPosicion,FechaIngreso)
+VALUES
+(4,1,4,'2025-01-10'),
+(5,2,3,'2025-01-12'),
+(6,2,2,'2025-01-15'),
+(7,3,1,'2025-01-18'),
+(8,3,4,'2025-01-20'),
+(9,4,3,'2025-01-22'),
+(10,4,2,'2025-01-25'),
+(11,1,1,'2025-01-28'),
+(12,2,4,'2025-02-01'),
+(13,3,3,'2025-02-05');
+GO
+
+INSERT INTO competencia.equipos (Nombre,IdCategoria)
+VALUES
+('Cantera Sub10',1),
+('Cantera Sub13',2),
+('Cantera Sub17',3),
+('Cantera Sub20',4);
+GO
+
+INSERT INTO competencia.jugador_equipo
+(IdJugador,IdEquipo,FechaIngreso)
+VALUES
+(1,1,'2025-01-10'),
+(2,2,'2025-01-12'),
+(3,2,'2025-01-15'),
+(4,3,'2025-01-18'),
+(5,3,'2025-01-20'),
+(6,4,'2025-01-22'),
+(7,4,'2025-01-25'),
+(8,1,'2025-01-28'),
+(9,2,'2025-02-01'),
+(10,3,'2025-02-05');
+GO
+
+INSERT INTO competencia.torneos
+(Nombre,Tipo,FechaInicio,FechaFin,IdTemporada)
+VALUES
+('Liga Juvenil Apertura','Local','2025-02-01','2025-06-30',1),
+('Copa Regional','Regional','2025-07-01','2025-11-30',1);
+GO
+
+INSERT INTO competencia.partidos
+(IdTorneo,Fecha,Hora,Lugar,Resultado)
+VALUES
+(1,'2025-03-10','10:00','Estadio Norte','2-1'),
+(1,'2025-03-20','11:00','Estadio Sur','1-1'),
+(2,'2025-08-15','09:00','Estadio Central','3-0');
+GO
+
+INSERT INTO rendimiento.tipo_entrenamiento (Nombre)
+VALUES ('Técnico'),('Físico'),('Táctico');
+GO
+
+INSERT INTO rendimiento.entrenamientos
+(Fecha,HoraInicio,HoraFin,Lugar,IdEntrenador,IdTipoEntrenamiento)
+VALUES
+('2025-03-05','08:00','10:00','Cancha 1',1,1),
+('2025-03-06','08:00','10:00','Cancha 1',2,2);
+GO
+
+INSERT INTO rendimiento.asistencias
+(IdEntrenamiento,IdJugador,Estado)
+VALUES
+(1,1,'Presente'),
+(1,2,'Presente'),
+(1,3,'Ausente'),
+(2,4,'Presente'),
+(2,5,'Presente');
+GO
+
+INSERT INTO rendimiento.estadisticas_jugador
+(IdJugador,Goles,Asistencias,TarjetasAmarillas,TarjetasRojas)
+VALUES
+(1,5,2,1,0),
+(2,3,4,0,0),
+(3,2,1,2,0),
+(4,7,3,1,1),
+(5,4,2,0,0),
+(6,6,1,1,0),
+(7,1,5,0,0),
+(8,0,2,0,0),
+(9,8,3,1,0),
+(10,2,2,0,0);
+GO
+
+INSERT INTO financiero.conceptos_pago
+(NombreConcepto,MontoBase,EsRecurrente)
+VALUES
+('Matrícula',250000,0),
+('Mensualidad',150000,1);
+GO
+
+INSERT INTO financiero.facturas
+(IdJugador,FechaEmision,FechaVencimiento,Estado)
+VALUES
+(1,'2025-03-01','2025-03-30','Pagada'),
+(2,'2025-03-01','2025-03-30','Pendiente'),
+(3,'2025-03-01','2025-03-30','Pagada'),
+(4,'2025-03-01','2025-03-30','Pendiente'),
+(5,'2025-03-01','2025-03-30','Pagada');
+GO
+
+INSERT INTO financiero.pagos
+(IdFactura,MontoPagado,FechaPago)
+VALUES
+(1,250000,'2025-03-10'),
+(3,250000,'2025-03-12'),
+(5,250000,'2025-03-15');
+GO
+
+
+/* ============================================================
+   5) CONSULTAS SIMPLES (una consulta fue comentada por error de columna)
+============================================================ */
+
+SELECT * FROM seguridad.roles;
+SELECT * FROM seguridad.usuarios;
+
+SELECT
+    u.IdUsuario,
+    u.PrimerNombre,
+    u.PrimerApellido,
+    u.Correo,
+    r.NombreRol
+FROM seguridad.usuarios u
+INNER JOIN seguridad.roles r
+    ON u.IdRol = r.IdRol;
+
+SELECT * FROM academico.categorias;
+SELECT * FROM academico.posiciones;
+SELECT * FROM academico.temporadas;
+
+SELECT
+    e.IdEntrenador,
+    u.PrimerNombre,
+    u.PrimerApellido,
+    e.Especialidad,
+    e.FechaContratacion
+FROM personal.entrenadores e
+INNER JOIN seguridad.usuarios u
+    ON e.IdUsuario = u.IdUsuario;
+
+SELECT
+    j.IdJugador,
+    u.PrimerNombre,
+    u.PrimerApellido,
+    c.NombreCategoria,
+    p.NombrePosicion,
+    j.FechaIngreso
+FROM personal.jugadores j
+INNER JOIN seguridad.usuarios u
+    ON j.IdUsuario = u.IdUsuario
+INNER JOIN academico.categorias c
+    ON j.IdCategoria = c.IdCategoria
+INNER JOIN academico.posiciones p
+    ON j.IdPosicion = p.IdPosicion;
+
+SELECT * FROM competencia.equipos;
+
+SELECT
+    e.Nombre AS Equipo,
+    u.PrimerNombre,
+    u.PrimerApellido
+FROM competencia.jugador_equipo je
+INNER JOIN personal.jugadores j
+    ON je.IdJugador = j.IdJugador
+INNER JOIN seguridad.usuarios u
+    ON j.IdUsuario = u.IdUsuario
+INNER JOIN competencia.equipos e
+    ON je.IdEquipo = e.IdEquipo;
+
+SELECT * FROM competencia.torneos;
+
+SELECT
+    t.Nombre AS Torneo,
+    p.Fecha,
+    p.Lugar,
+    p.Resultado
+FROM competencia.partidos p
+INNER JOIN competencia.torneos t
+    ON p.IdTorneo = t.IdTorneo;
+
+SELECT * FROM rendimiento.entrenamientos;
+SELECT * FROM rendimiento.asistencias;
+
+SELECT
+    u.PrimerNombre,
+    u.PrimerApellido,
+    e.Goles,
+    e.Asistencias,
+    e.TarjetasAmarillas,
+    e.TarjetasRojas
+FROM rendimiento.estadisticas_jugador e
+INNER JOIN personal.jugadores j
+    ON e.IdJugador = j.IdJugador
+INNER JOIN seguridad.usuarios u
+    ON j.IdUsuario = u.IdUsuario;
+
+SELECT * FROM financiero.conceptos_pago;
+SELECT * FROM financiero.facturas;
+
+SELECT
+    u.PrimerNombre,
+    u.PrimerApellido,
+    f.FechaEmision,
+    f.FechaVencimiento,
+    f.Estado
+FROM financiero.facturas f
+INNER JOIN personal.jugadores j
+    ON f.IdJugador = j.IdJugador
+INNER JOIN seguridad.usuarios u
+    ON j.IdUsuario = u.IdUsuario;
+
+SELECT
+    p.IdPago,
+    p.MontoPagado,
+    p.FechaPago
+FROM financiero.pagos p;
+
+SELECT COUNT(*) AS TotalJugadores
+FROM personal.jugadores;
+
+SELECT
+    c.NombreCategoria,
+    COUNT(j.IdJugador) AS TotalJugadores
+FROM personal.jugadores j
+INNER JOIN academico.categorias c
+    ON j.IdCategoria = c.IdCategoria
+GROUP BY c.NombreCategoria;
+
+SELECT SUM(MontoPagado) AS TotalRecaudado
+FROM financiero.pagos;
+
+SELECT
+    j.IdJugador,
+    u.PrimerNombre,
+    u.PrimerApellido
+FROM personal.jugadores j
+INNER JOIN seguridad.usuarios u
+    ON j.IdUsuario = u.IdUsuario
+LEFT JOIN competencia.jugador_equipo je
+    ON j.IdJugador = je.IdJugador
+WHERE je.IdJugador IS NULL;
+
+-- CORREGIDO: Esta consulta daba error porque u.FechaNacimiento NO existe en seguridad.usuarios
+-- SELECT
+--     u.PrimerNombre,
+--     u.PrimerApellido,
+--     c.NombreCategoria,
+--     DATEDIFF(YEAR, u.FechaNacimiento, GETDATE()) AS EdadActual
+-- FROM personal.jugadores j
+-- INNER JOIN seguridad.usuarios u
+--     ON j.IdUsuario = u.IdUsuario
+-- INNER JOIN academico.categorias c
+--     ON j.IdCategoria = c.IdCategoria
+-- WHERE DATEDIFF(YEAR, u.FechaNacimiento, GETDATE())
+--       NOT BETWEEN c.EdadMin AND c.EdadMax;
+
+SELECT *
+FROM financiero.facturas
+WHERE FechaVencimiento < GETDATE()
+AND Estado = 'Pendiente';
+
+SELECT
+    u.PrimerNombre,
+    u.PrimerApellido,
+    COUNT(f.IdFactura) AS FacturasPendientes
+FROM financiero.facturas f
+INNER JOIN personal.jugadores j
+    ON f.IdJugador = j.IdJugador
+INNER JOIN seguridad.usuarios u
+    ON j.IdUsuario = u.IdUsuario
+WHERE f.Estado = 'Pendiente'
+GROUP BY u.PrimerNombre, u.PrimerApellido;
+
+SELECT
+    YEAR(FechaPago) AS Año,
+    MONTH(FechaPago) AS Mes,
+    SUM(MontoPagado) AS TotalRecaudado
+FROM financiero.pagos
+GROUP BY YEAR(FechaPago), MONTH(FechaPago)
+ORDER BY Año, Mes;
+
+SELECT TOP 5
+    u.PrimerNombre,
+    u.PrimerApellido,
+    e.Goles
+FROM rendimiento.estadisticas_jugador e
+INNER JOIN personal.jugadores j
+    ON e.IdJugador = j.IdJugador
+INNER JOIN seguridad.usuarios u
+    ON j.IdUsuario = u.IdUsuario
+ORDER BY e.Goles DESC;
+
+SELECT
+    e.Nombre,
+    COUNT(je.IdJugador) AS TotalJugadores
+FROM competencia.equipos e
+LEFT JOIN competencia.jugador_equipo je
+    ON e.IdEquipo = je.IdEquipo
+GROUP BY e.Nombre;
+
+
+/* ============================================================
+   6) CONSULTAS CON JOINs Y SUBCONSULTAS
+============================================================ */
+
+-- Jugadores con más goles que el promedio general
+SELECT
+    u.PrimerNombre,
+    u.PrimerApellido,
+    e.Goles
+FROM rendimiento.estadisticas_jugador e
+INNER JOIN personal.jugadores j
+    ON e.IdJugador = j.IdJugador
+INNER JOIN seguridad.usuarios u
+    ON j.IdUsuario = u.IdUsuario
+WHERE e.Goles > (
+    SELECT AVG(Goles)
+    FROM rendimiento.estadisticas_jugador
+);
+
+-- Equipo con más jugadores inscritos
+SELECT e.Nombre
+FROM competencia.equipos e
+WHERE (
+    SELECT COUNT(*)
+    FROM competencia.jugador_equipo je
+    WHERE je.IdEquipo = e.IdEquipo
+) = (
+    SELECT MAX(Cantidad)
+    FROM (
+        SELECT COUNT(*) AS Cantidad
+        FROM competencia.jugador_equipo
+        GROUP BY IdEquipo
+    ) AS Sub
+);
+
+-- Entrenadores con más entrenamientos que el promedio
+SELECT
+    u.PrimerNombre,
+    u.PrimerApellido,
+    COUNT(en.IdEntrenamiento) AS TotalSesiones
+FROM rendimiento.entrenamientos en
+INNER JOIN personal.entrenadores e
+    ON en.IdEntrenador = e.IdEntrenador
+INNER JOIN seguridad.usuarios u
+    ON e.IdUsuario = u.IdUsuario
+GROUP BY u.PrimerNombre, u.PrimerApellido
+HAVING COUNT(en.IdEntrenamiento) > (
+    SELECT AVG(Sesiones)
+    FROM (
+        SELECT COUNT(*) AS Sesiones
+        FROM rendimiento.entrenamientos
+        GROUP BY IdEntrenador
+    ) AS Prom
+);
+
+-- Jugadores que han asistido a todos los entrenamientos
+SELECT
+    u.PrimerNombre,
+    u.PrimerApellido
+FROM personal.jugadores j
+INNER JOIN seguridad.usuarios u
+    ON j.IdUsuario = u.IdUsuario
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM rendimiento.entrenamientos en
+    WHERE NOT EXISTS (
+        SELECT 1
+        FROM rendimiento.asistencias a
+        WHERE a.IdEntrenamiento = en.IdEntrenamiento
+          AND a.IdJugador = j.IdJugador
+          AND a.Estado = 'Presente'
+    )
+);
+
+-- Jugadores que han pagado todas sus facturas
+SELECT
+    u.PrimerNombre,
+    u.PrimerApellido
+FROM personal.jugadores j
+INNER JOIN seguridad.usuarios u
+    ON j.IdUsuario = u.IdUsuario
+WHERE NOT EXISTS (
+    SELECT 1
+    FROM financiero.facturas f
+    WHERE f.IdJugador = j.IdJugador
+      AND f.Estado <> 'Pagada'
+);
+
+-- Rendimiento total del equipo vs promedio global
+SELECT
+    e.Nombre AS Equipo,
+    SUM(est.Goles) AS TotalGolesEquipo,
+    (
+        SELECT AVG(Goles)
+        FROM rendimiento.estadisticas_jugador
+    ) AS PromedioGlobal
+FROM competencia.equipos e
+INNER JOIN competencia.jugador_equipo je
+    ON e.IdEquipo = je.IdEquipo
+INNER JOIN rendimiento.estadisticas_jugador est
+    ON je.IdJugador = est.IdJugador
+GROUP BY e.Nombre;
+
+-- Categorías con más inscritos que el promedio
+SELECT
+    c.NombreCategoria,
+    COUNT(j.IdJugador) AS TotalJugadores
+FROM academico.categorias c
+INNER JOIN personal.jugadores j
+    ON c.IdCategoria = j.IdCategoria
+GROUP BY c.NombreCategoria
+HAVING COUNT(j.IdJugador) > (
+    SELECT AVG(Cantidad)
+    FROM (
+        SELECT COUNT(*) AS Cantidad
+        FROM personal.jugadores
+        GROUP BY IdCategoria
+    ) AS Sub
+);
+
+
+/* ============================================================
+   7) CONSULTAS KPIs / OKRs (corregido: divisiones con NULLIF)
+============================================================ */
+
+-- KPI 1: Tasa de Morosidad
+SELECT
+    COUNT(CASE WHEN Estado = 'Pendiente' THEN 1 END) * 100.0
+    / NULLIF(COUNT(*), 0) AS TasaMorosidad
+FROM financiero.facturas;
+
+-- KPI 2: Nivel de Recaudo Mensual
+SELECT
+    YEAR(FechaPago) AS Año,
+    MONTH(FechaPago) AS Mes,
+    SUM(MontoPagado) AS TotalRecaudado
+FROM financiero.pagos
+GROUP BY YEAR(FechaPago), MONTH(FechaPago)
+ORDER BY Año, Mes;
+
+-- KPI 3: Ticket Promedio por Jugador
+SELECT
+    SUM(MontoPagado) * 1.0 /
+    NULLIF((SELECT COUNT(*) FROM personal.jugadores), 0) AS TicketPromedio
+FROM financiero.pagos;
+
+-- KPI 4: Promedio de Goles por Jugador
+SELECT AVG(Goles) AS PromedioGoles
+FROM rendimiento.estadisticas_jugador;
+
+-- KPI 5: Tasa de Asistencia a Entrenamientos
+SELECT
+    SUM(CASE WHEN Estado = 'Presente' THEN 1 ELSE 0 END) * 100.0
+    / NULLIF(COUNT(*), 0) AS TasaAsistencia
+FROM rendimiento.asistencias;
+
+-- KPI 6: Promedio de Goles por Equipo
+SELECT
+    e.Nombre,
+    AVG(est.Goles) AS PromedioGolesEquipo
+FROM competencia.equipos e
+INNER JOIN competencia.jugador_equipo je
+    ON e.IdEquipo = je.IdEquipo
+INNER JOIN rendimiento.estadisticas_jugador est
+    ON je.IdJugador = est.IdJugador
+GROUP BY e.Nombre;
+
+-- KPI 7: Crecimiento de Inscripciones
+SELECT
+    YEAR(FechaIngreso) AS Año,
+    COUNT(*) AS NuevosJugadores
+FROM personal.jugadores
+GROUP BY YEAR(FechaIngreso);
+
+-- KPI 8: Ratio Entrenador / Jugadores
+SELECT
+    (SELECT COUNT(*) FROM personal.jugadores) * 1.0 /
+    NULLIF((SELECT COUNT(*) FROM personal.entrenadores), 0) AS RatioEntrenadorJugador;
+
+-- OKR 1: Reducir Morosidad al 10%
+SELECT
+    CASE
+        WHEN (
+            COUNT(CASE WHEN Estado = 'Pendiente' THEN 1 END) * 100.0
+            / NULLIF(COUNT(*), 0)
+        ) <= 10 THEN 'Objetivo Cumplido'
+        ELSE 'Objetivo NO Cumplido'
+    END AS EstadoOKR
+FROM financiero.facturas;
+
+-- OKR 2: Lograr Asistencia Superior al 85%
+SELECT
+    CASE
+        WHEN (
+            SUM(CASE WHEN Estado = 'Presente' THEN 1 ELSE 0 END) * 100.0
+            / NULLIF(COUNT(*), 0)
+        ) >= 85 THEN 'Objetivo Cumplido'
+        ELSE 'Objetivo NO Cumplido'
+    END AS EstadoOKR
+FROM rendimiento.asistencias;
+
+-- OKR 3: Tener al menos 2 jugadores con más de 10 goles
+SELECT COUNT(*) AS JugadoresElite
+FROM rendimiento.estadisticas_jugador
+WHERE Goles > 10;
+
+SELECT
+    CASE
+        WHEN COUNT(*) >= 2 THEN 'Objetivo Cumplido'
+        ELSE 'Objetivo NO Cumplido'
+    END AS EstadoOKR
+FROM rendimiento.estadisticas_jugador
+WHERE Goles > 10;
+
+
+/* ============================================================
+   8) TRIGGERS / SP / VIEWS
+   (El archivo SP original venía vacío; aquí moví el trigger que estaba en consultas)
+============================================================ */
+
+IF OBJECT_ID('financiero.trg_ActualizarEstadoFactura', 'TR') IS NOT NULL
+    DROP TRIGGER financiero.trg_ActualizarEstadoFactura;
+GO
+
+CREATE TRIGGER financiero.trg_ActualizarEstadoFactura
+ON financiero.pagos
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    UPDATE f
+    SET Estado = 'Pagada'
+    FROM financiero.facturas f
+    INNER JOIN inserted i
+        ON f.IdFactura = i.IdFactura;
+END
+GO
+
+
+
+
+
+
+
+
+USE DATA_GOAL;
+GO
+
+-- Ver passwords actuales antes de encriptar
+SELECT IdUsuario, PrimerNombre, PrimerApellido, PasswordHash
+FROM seguridad.usuarios;
+GO
+
+-- Actualizar cada usuario con su password encriptado en SHA-256
+UPDATE seguridad.usuarios SET PasswordHash = CONVERT(VARCHAR(255), HASHBYTES('SHA2_256', 'Admin1234'),    2) WHERE Correo = 'admin@datagoal.com';
+UPDATE seguridad.usuarios SET PasswordHash = CONVERT(VARCHAR(255), HASHBYTES('SHA2_256', 'Coach1234'),    2) WHERE Correo = 'cmendez@datagoal.com';
+UPDATE seguridad.usuarios SET PasswordHash = CONVERT(VARCHAR(255), HASHBYTES('SHA2_256', 'Coach5678'),    2) WHERE Correo = 'alopez@datagoal.com';
+UPDATE seguridad.usuarios SET PasswordHash = CONVERT(VARCHAR(255), HASHBYTES('SHA2_256', 'Jugador123'),   2) WHERE Correo = 'mateo1@datagoal.com';
+UPDATE seguridad.usuarios SET PasswordHash = CONVERT(VARCHAR(255), HASHBYTES('SHA2_256', 'Jugador123'),   2) WHERE Correo = 'daniel2@datagoal.com';
+UPDATE seguridad.usuarios SET PasswordHash = CONVERT(VARCHAR(255), HASHBYTES('SHA2_256', 'Jugador123'),   2) WHERE Correo = 'santiago3@datagoal.com';
+UPDATE seguridad.usuarios SET PasswordHash = CONVERT(VARCHAR(255), HASHBYTES('SHA2_256', 'Jugador123'),   2) WHERE Correo = 'lucas4@datagoal.com';
+UPDATE seguridad.usuarios SET PasswordHash = CONVERT(VARCHAR(255), HASHBYTES('SHA2_256', 'Jugador123'),   2) WHERE Correo = 'samuel5@datagoal.com';
+UPDATE seguridad.usuarios SET PasswordHash = CONVERT(VARCHAR(255), HASHBYTES('SHA2_256', 'Jugador123'),   2) WHERE Correo = 'nicolas6@datagoal.com';
+UPDATE seguridad.usuarios SET PasswordHash = CONVERT(VARCHAR(255), HASHBYTES('SHA2_256', 'Jugador123'),   2) WHERE Correo = 'sebastian7@datagoal.com';
+UPDATE seguridad.usuarios SET PasswordHash = CONVERT(VARCHAR(255), HASHBYTES('SHA2_256', 'Jugador123'),   2) WHERE Correo = 'david8@datagoal.com';
+UPDATE seguridad.usuarios SET PasswordHash = CONVERT(VARCHAR(255), HASHBYTES('SHA2_256', 'Jugador123'),   2) WHERE Correo = 'juan9@datagoal.com';
+UPDATE seguridad.usuarios SET PasswordHash = CONVERT(VARCHAR(255), HASHBYTES('SHA2_256', 'Jugador123'),   2) WHERE Correo = 'emilio10@datagoal.com';
+GO
+
+-- Verificar que quedaron encriptados (deben verse como cadenas hexadecimales largas)
+SELECT IdUsuario, PrimerNombre, PrimerApellido, PasswordHash
+FROM seguridad.usuarios;
+GO
+
+
+
+USE master;
+GO
+
+/* ============================================================
+   SEGURIDAD DATA_GOAL
+   Logins de servidor → Users en BD → Roles → Permisos
+   Perfil 1: login_admin      → Administrador total
+   Perfil 2: login_entrenador → Operativo (gestión deportiva/financiera)
+   Perfil 3: login_auditor    → Solo lectura + DENY escritura
+============================================================ */
+
+-- ============================================================
+-- PASO 1: CREAR LOGINS EN EL SERVIDOR
+-- ============================================================
+IF NOT EXISTS (SELECT 1 FROM sys.server_principals WHERE name = 'login_admin')
+    CREATE LOGIN login_admin
+    WITH PASSWORD = 'Admin@DataGoal2025',
+         CHECK_POLICY = ON,
+         CHECK_EXPIRATION = ON;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.server_principals WHERE name = 'login_entrenador')
+    CREATE LOGIN login_entrenador
+    WITH PASSWORD = 'Entrenador@DG2025',
+         CHECK_POLICY = ON,
+         CHECK_EXPIRATION = ON;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.server_principals WHERE name = 'login_auditor')
+    CREATE LOGIN login_auditor
+    WITH PASSWORD = 'Auditor@DataGoal2025',
+         CHECK_POLICY = ON,
+         CHECK_EXPIRATION = ON;
+GO
+
+USE DATA_GOAL;
+GO
+
+-- ============================================================
+-- PASO 2: CREAR USERS EN LA BASE DE DATOS
+-- ============================================================
+IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = 'admin')
+    CREATE USER admin
+    FOR LOGIN login_admin
+    WITH DEFAULT_SCHEMA = seguridad;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = 'entrenador')
+    CREATE USER entrenador
+    FOR LOGIN login_entrenador
+    WITH DEFAULT_SCHEMA = dbo;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = 'auditor')
+    CREATE USER auditor
+    FOR LOGIN login_auditor
+    WITH DEFAULT_SCHEMA = auditoria;
+GO
+
+-- ============================================================
+-- PASO 3: CREAR ROLES EN LA BASE DE DATOS
+-- ============================================================
+IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = 'rol_admin_total' AND type = 'R')
+    CREATE ROLE rol_admin_total;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = 'rol_entrenador_operativo' AND type = 'R')
+    CREATE ROLE rol_entrenador_operativo;
+GO
+
+IF NOT EXISTS (SELECT 1 FROM sys.database_principals WHERE name = 'rol_auditor_readonly' AND type = 'R')
+    CREATE ROLE rol_auditor_readonly;
+GO
+
+-- ============================================================
+-- PASO 4: ASIGNAR USUARIOS A ROLES
+-- ============================================================
+ALTER ROLE rol_admin_total            ADD MEMBER admin;
+ALTER ROLE rol_entrenador_operativo   ADD MEMBER entrenador;
+ALTER ROLE rol_auditor_readonly       ADD MEMBER auditor;
+GO
+
+-- ============================================================
+-- PASO 5: ASIGNAR PERMISOS A ROLES
+-- ============================================================
+
+-- ROL ADMIN: control total sobre todos los esquemas
+GRANT SELECT, INSERT, UPDATE, DELETE ON SCHEMA::seguridad   TO rol_admin_total;
+GRANT SELECT, INSERT, UPDATE, DELETE ON SCHEMA::academico   TO rol_admin_total;
+GRANT SELECT, INSERT, UPDATE, DELETE ON SCHEMA::personal    TO rol_admin_total;
+GRANT SELECT, INSERT, UPDATE, DELETE ON SCHEMA::competencia TO rol_admin_total;
+GRANT SELECT, INSERT, UPDATE, DELETE ON SCHEMA::rendimiento TO rol_admin_total;
+GRANT SELECT, INSERT, UPDATE, DELETE ON SCHEMA::financiero  TO rol_admin_total;
+GRANT SELECT, INSERT, UPDATE, DELETE ON SCHEMA::auditoria   TO rol_admin_total;
+GO
+
+-- ROL ENTRENADOR: lectura y escritura operativa (sin acceso a seguridad ni financiero completo)
+GRANT SELECT, INSERT, UPDATE ON SCHEMA::academico   TO rol_entrenador_operativo;
+GRANT SELECT, INSERT, UPDATE ON SCHEMA::personal    TO rol_entrenador_operativo;
+GRANT SELECT, INSERT, UPDATE ON SCHEMA::competencia TO rol_entrenador_operativo;
+GRANT SELECT, INSERT, UPDATE ON SCHEMA::rendimiento TO rol_entrenador_operativo;
+GRANT SELECT                 ON SCHEMA::financiero  TO rol_entrenador_operativo;
+DENY  INSERT, UPDATE, DELETE ON SCHEMA::seguridad   TO rol_entrenador_operativo;
+DENY  INSERT, UPDATE, DELETE ON SCHEMA::financiero  TO rol_entrenador_operativo;
+GO
+
+-- ROL AUDITOR: solo lectura en auditoria, DENY de escritura en todo
+GRANT SELECT ON SCHEMA::auditoria   TO rol_auditor_readonly;
+GRANT SELECT ON SCHEMA::rendimiento TO rol_auditor_readonly;
+GRANT SELECT ON SCHEMA::financiero  TO rol_auditor_readonly;
+DENY  INSERT, UPDATE, DELETE ON SCHEMA::auditoria   TO rol_auditor_readonly;
+DENY  INSERT, UPDATE, DELETE ON SCHEMA::rendimiento TO rol_auditor_readonly;
+DENY  INSERT, UPDATE, DELETE ON SCHEMA::financiero  TO rol_auditor_readonly;
+DENY  SELECT, INSERT, UPDATE, DELETE ON SCHEMA::seguridad   TO rol_auditor_readonly;
+DENY  SELECT, INSERT, UPDATE, DELETE ON SCHEMA::personal    TO rol_auditor_readonly;
+DENY  SELECT, INSERT, UPDATE, DELETE ON SCHEMA::academico   TO rol_auditor_readonly;
+DENY  SELECT, INSERT, UPDATE, DELETE ON SCHEMA::competencia TO rol_auditor_readonly;
+GO
+
+
+
+
+
+
+
+USE DATA_GOAL;
+GO
+
+/* ============================================================
+   1. VER LOGINS Y SUS MAPPINGS A USUARIOS DE BD
+============================================================ */
+SELECT
+    sp.name             AS Login_Servidor,
+    sp.type_desc        AS Tipo_Login,
+    dp.name             AS User_BD,
+    dp.default_schema_name AS Schema_Defecto
+FROM sys.server_principals sp
+LEFT JOIN sys.database_principals dp
+    ON sp.sid = dp.sid
+WHERE sp.name IN ('login_admin','login_entrenador','login_auditor');
+GO
+
+/* ============================================================
+   2. VER QUÉ ROLES TIENE CADA USUARIO EN LA BD
+============================================================ */
+SELECT
+    dp_user.name    AS Usuario,
+    dp_role.name    AS Rol_Asignado
+FROM sys.database_role_members drm
+INNER JOIN sys.database_principals dp_role
+    ON drm.role_principal_id = dp_role.principal_id
+INNER JOIN sys.database_principals dp_user
+    ON drm.member_principal_id = dp_user.principal_id
+WHERE dp_user.name IN ('admin','entrenador','auditor');
+GO
+
+/* ============================================================
+   3. VER PERMISOS ASIGNADOS A CADA ROL (GRANT / DENY)
+============================================================ */
+SELECT
+    dp.name         AS Rol,
+    p.state_desc    AS Tipo_Permiso,   -- GRANT o DENY
+    p.permission_name AS Permiso,
+    p.class_desc    AS Clase,
+    SCHEMA_NAME(major_id) AS Esquema
+FROM sys.database_permissions p
+INNER JOIN sys.database_principals dp
+    ON p.grantee_principal_id = dp.principal_id
+WHERE dp.name IN ('rol_admin_total','rol_entrenador_operativo','rol_auditor_readonly')
+ORDER BY dp.name, p.state_desc, p.permission_name;
+GO
+
+/* ============================================================
+   4. VER PASSWORDS ENCRIPTADOS EN LA TABLA DE USUARIOS
+============================================================ */
+SELECT
+    IdUsuario,
+    PrimerNombre + ' ' + PrimerApellido AS NombreCompleto,
+    Correo,
+    LEFT(PasswordHash, 20) + '...' AS PasswordHash_Encriptado,
+    LEN(PasswordHash) AS LongitudHash
+FROM seguridad.usuarios
+ORDER BY IdUsuario;
+GO
