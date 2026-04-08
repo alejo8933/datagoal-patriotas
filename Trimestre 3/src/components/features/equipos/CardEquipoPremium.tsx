@@ -1,6 +1,7 @@
 'use client'
 
 import { Trophy, Calendar, MapPin, User, Users, BarChart3, Users2, MoreHorizontal } from 'lucide-react'
+import Link from 'next/link'
 import ModalEditarAvanzado from './ModalEditorAvanzado'
 import ModalEliminar from '@/components/features/ui/ModalEliminar'
 
@@ -116,10 +117,13 @@ export default function CardEquipoPremium({ equipo }: { equipo: Equipo }) {
 
         {/* ACTION BUTTONS PRIMARY */}
         <div className="grid grid-cols-2 gap-3 pt-4">
-          <button className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-900 text-white font-black rounded-2xl hover:bg-black transition-all text-[10px] uppercase tracking-widest shadow-lg shadow-gray-900/10">
+          <Link 
+            href={`/dashboard/admin/equipos/${equipo.id}/plantilla`}
+            className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-900 text-white font-black rounded-2xl hover:bg-black transition-all text-[10px] uppercase tracking-widest shadow-lg shadow-gray-900/10"
+          >
             <Users2 size={16} className="text-red-500" />
             Ver Plantilla
-          </button>
+          </Link>
           <button className="flex items-center justify-center gap-2 px-4 py-3 bg-red-600 text-white font-black rounded-2xl hover:bg-red-700 shadow-lg shadow-red-500/20 transition-all text-[10px] uppercase tracking-widest">
             <BarChart3 size={16} />
             Estadísticas

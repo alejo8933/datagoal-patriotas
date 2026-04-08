@@ -22,6 +22,13 @@ export async function crearPartido(formData: FormData) {
     }
   }
 
+  if (equipo_local === equipo_visitante) {
+    return {
+      success: false,
+      message: 'El equipo Local y el Visitante deben ser distintos.',
+    }
+  }
+
   // Inserción, la tabla es partidos en el esquema public
   const { data, error } = await supabase
     .from('partidos')
@@ -76,6 +83,20 @@ export async function editarPartido(formData: FormData) {
 
   if (!id || !equipo_local || !equipo_visitante || !fecha) {
     return { success: false, message: 'ID, Equipos y Fecha son obligatorios.' }
+  }
+
+  if (equipo_local === equipo_visitante) {
+    return { success: false, message: 'El equipo Local y el Visitante deben ser distintos.' }
+  }
+
+  const gLocal = goles_local ? parseInt(goles_local) : null
+  const gVisitante = goles_visitante ? parseInt(goles_visitante) : null
+
+  if ((gLocal !== null && gLocal < 0) || (gVisitante !== null && gVisitante < 0)) {
+    return {
+      success: false,
+      message: 'Los goles no pueden ser números negativos.',
+    }
   }
 
   const { error } = await supabase

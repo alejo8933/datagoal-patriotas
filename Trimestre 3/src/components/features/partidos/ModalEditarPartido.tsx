@@ -104,7 +104,7 @@ export default function ModalEditarPartido({ partido, soloResultado = false }: M
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-1.5">
                         <label className="text-sm font-medium text-gray-700">Fecha</label>
-                        <input type="date" name="fecha" defaultValue={partido.fecha} className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500/20" />
+                        <input required type="date" id="fecha" name="fecha" min="2024-01-01" defaultValue={partido.fecha} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition text-gray-700" />
                       </div>
                       <div className="space-y-1.5">
                         <label className="text-sm font-medium text-gray-700">Hora</label>
@@ -119,12 +119,12 @@ export default function ModalEditarPartido({ partido, soloResultado = false }: M
                   <div className="flex items-center justify-center gap-6">
                     <div className="text-center space-y-2">
                        <p className="text-[10px] font-bold text-gray-500 truncate w-24 uppercase">{partido.equipo_local}</p>
-                       <input type="number" name="goles_local" placeholder="0" defaultValue={partido.goles_local ?? ''} className="w-16 h-16 text-3xl font-bold text-center border-2 border-gray-200 rounded-xl focus:border-blue-600 focus:ring-0" />
+                       <input type="number" name="goles_local" min="0" placeholder="0" defaultValue={partido.goles_local ?? ''} className="w-16 h-16 text-3xl font-bold text-center border-2 border-gray-200 rounded-xl focus:border-blue-600 focus:ring-0" />
                     </div>
                     <span className="text-2xl font-bold text-gray-300">:</span>
                     <div className="text-center space-y-2">
                        <p className="text-[10px] font-bold text-gray-500 truncate w-24 uppercase">{partido.equipo_visitante}</p>
-                       <input type="number" name="goles_visitante" placeholder="0" defaultValue={partido.goles_visitante ?? ''} className="w-16 h-16 text-3xl font-bold text-center border-2 border-gray-200 rounded-xl focus:border-blue-600 focus:ring-0" />
+                       <input type="number" name="goles_visitante" min="0" placeholder="0" defaultValue={partido.goles_visitante ?? ''} className="w-16 h-16 text-3xl font-bold text-center border-2 border-gray-200 rounded-xl focus:border-blue-600 focus:ring-0" />
                     </div>
                   </div>
                   

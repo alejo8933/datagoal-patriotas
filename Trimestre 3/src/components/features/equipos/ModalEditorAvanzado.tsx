@@ -1,30 +1,28 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Edit3, X, Loader2, Image, Trophy, Medal, MapPin, User, Settings2, Calendar } from 'lucide-react'
+import { Settings2, X, Loader2, Shield, User, MapPin, Calendar, Trash2 } from 'lucide-react'
 import { editarEquipo } from '@/services/actions/equipos'
+import { useEntrenadores } from '@/hooks/useEntrenadores'
 
-interface Equipo {
-  id: string
-  equipo: string
-  categoria: string
-  imagen_url?: string
-  fundacion?: number
-  sede?: string
-  tecnico?: string
-  logros?: any
+interface ModalEditorAvanzadoProps {
+  equipo: {
+    id: string
+    equipo: string
+    categoria: string | null
+    tecnico: string | null
+    tecnico_id: string | null
+    sede: string | null
+    fundacion: number | null
+  }
 }
 
-export default function ModalEditorAvanzado({ equipo }: { equipo: Equipo }) {
+export default function ModalEditorAvanzado({ equipo }: ModalEditorAvanzadoProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   
-  // Parsear logros para el textarea (cada línea un logro)
-  const logrosTexto = Array.isArray(equipo.logros) 
-    ? equipo.logros.join('\n') 
-    : (typeof equipo.logros === 'string' ? JSON.parse(equipo.logros).join('\n') : '')
-
+  const { entrenadores, loading: loadingCoaches } = useEntrenadores()
   const formRef = useRef<HTMLFormElement>(null)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
@@ -35,12 +33,17 @@ export default function ModalEditorAvanzado({ equipo }: { equipo: Equipo }) {
     const formData = new FormData(e.currentTarget)
     formData.append('id', equipo.id)
     
+    // Si no se selecciona técnico, mandamos vacío para el id
+    if (!formData.get('tecnico_id')) {
+        formData.append('tecnico_id', '')
+    }
+
     const result = await editarEquipo(formData)
     
     if (result?.success) {
       setIsOpen(false)
     } else {
-      setError(result?.message || 'Error al actualizar.')
+      setError(result?.message || 'Error al actualizar el equipo.')
     }
     
     setIsLoading(false)
@@ -50,176 +53,161 @@ export default function ModalEditorAvanzado({ equipo }: { equipo: Equipo }) {
     <>
       <button 
         onClick={() => setIsOpen(true)}
-        className="flex items-center justify-center gap-2 w-full py-2.5 bg-white text-gray-600 font-bold rounded-xl border border-gray-100 hover:bg-gray-50 transition-all text-[10px] uppercase tracking-widest hover:border-red-100 hover:text-red-600"
+        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-xl transition-all"
+        title="Configuración Avanzada"
       >
-        <Edit3 size={14} />
-        Editar Perfil
+        <Settings2 size={18} />
       </button>
 
       {isOpen && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 md:p-10 bg-gray-900/60 backdrop-blur-xl animate-in fade-in duration-300">
-          <div className="bg-white rounded-[3rem] shadow-2xl w-full max-w-4xl overflow-hidden animate-in zoom-in-95 duration-300 border border-white/20">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-950/60 backdrop-blur-md animate-in fade-in duration-300">
+          <div className="bg-white rounded-[2.5rem] shadow-2xl w-full max-w-2xl overflow-hidden animate-in zoom-in-95 duration-500 border border-gray-100">
             
-            {/* MODAL HEADER */}
-            <div className="p-10 bg-gray-50/50 border-b border-gray-100 flex items-center justify-between">
-              <div className="flex items-center gap-5">
-                <div className="p-4 bg-red-600 text-white rounded-[1.5rem] shadow-xl shadow-red-500/20">
-                  <Settings2 size={28} />
-                </div>
-                <div>
-                  <h2 className="text-3xl font-black text-gray-950 tracking-tight">
-                    Configuración de Equipo
-                  </h2>
-                  <p className="text-sm text-gray-500 font-medium mt-0.5">
-                    Modificando el perfil oficial de <span className="text-red-600 font-bold">{equipo.equipo}</span>
-                  </p>
-                </div>
-              </div>
-              <button 
-                onClick={() => !isLoading && setIsOpen(false)} 
-                className="p-3 bg-white hover:bg-red-50 text-gray-400 hover:text-red-600 rounded-full shadow-sm transition-all border border-gray-100"
-              >
-                <X size={24} />
-              </button>
+            {/* Header */}
+            <div className="bg-gray-900 px-10 py-10 text-white relative overflow-hidden">
+               <div className="absolute right-0 top-0 opacity-10 pointer-events-none">
+                  <Shield size={200} />
+               </div>
+               <div className="relative z-10 flex items-center justify-between">
+                  <div className="flex items-center gap-5">
+                    <div className="h-16 w-16 bg-red-600 rounded-2xl flex items-center justify-center shadow-2xl shadow-red-600/40">
+                       <Shield size={32} />
+                    </div>
+                    <div>
+                      <h2 className="text-3xl font-black tracking-tight">{equipo.equipo}</h2>
+                      <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Editor Maestro de Categoría</p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => !isLoading && setIsOpen(false)}
+                    className="p-2 text-gray-400 hover:text-white transition-colors"
+                  >
+                    <X size={28} />
+                  </button>
+               </div>
             </div>
             
-            <form ref={formRef} onSubmit={handleSubmit} className="p-10 md:p-14 max-h-[70vh] overflow-y-auto custom-scrollbar">
+            <form ref={formRef} onSubmit={handleSubmit} className="p-10">
               {error && (
-                <div className="mb-10 p-5 bg-red-50 text-red-700 text-sm rounded-[1.5rem] border-l-8 border-red-500 font-bold flex items-center gap-3">
-                  <div className="w-2 h-2 rounded-full bg-red-500 animate-ping" />
-                  {error}
+                <div className="mb-8 p-4 bg-red-50 text-red-600 text-sm rounded-2xl border border-red-100 font-black italic">
+                  ⚠️ {error}
                 </div>
               )}
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-10">
-                
-                {/* IDENTIDAD VISUAL */}
-                <div className="space-y-4 md:col-span-2 bg-gray-50/50 p-8 rounded-[2rem] border border-gray-100">
-                  <div className="flex items-center gap-2 text-xs font-black text-gray-400 uppercase tracking-[0.2em]">
-                    <Image size={16} className="text-red-500" />
-                    Imagen de Portada (URL Directa)
-                  </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Nombre del Equipo */}
+                <div className="space-y-2 md:col-span-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Identidad de Competición *</label>
                   <input 
-                    name="imagen_url" 
-                    defaultValue={equipo.imagen_url || ''} 
-                    placeholder="https://images.unsplash.com/photo-..."
-                    className="w-full px-6 py-4 bg-white border-2 border-gray-100 rounded-2xl focus:border-red-500/50 focus:ring-4 focus:ring-red-500/5 transition-all font-medium text-gray-900 text-sm"
+                    required 
+                    name="equipo" 
+                    defaultValue={equipo.equipo}
+                    pattern="[A-Za-z0-9À-ÿ\s-]+"
+                    title="Solo letras, números y guiones"
+                    className="w-full px-6 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-red-500/20 focus:ring-4 focus:ring-red-500/5 outline-none transition-all font-bold text-gray-900 text-lg" 
                   />
-                  <p className="text-[10px] text-gray-400 italic ml-2">Recomendado: 1200x600px para mejor resolución.</p>
                 </div>
 
-                {/* DATOS BÁSICOS */}
-                <div className="space-y-6">
-                  <div className="space-y-2.5">
-                    <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Nombre de la Categoría</label>
-                    <input 
-                      name="equipo" 
-                      defaultValue={equipo.equipo} 
-                      className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent focus:border-red-500/30 rounded-2xl focus:bg-white transition-all font-bold text-gray-900 shadow-sm" 
-                    />
-                  </div>
-                  <div className="space-y-2.5">
-                    <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1">Nivel Competitivo</label>
+                {/* Categoria */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Categoría</label>
+                  <select 
+                    name="categoria" 
+                    defaultValue={equipo.categoria || ''}
+                    className="w-full px-6 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-red-500/20 focus:ring-4 focus:ring-red-500/5 outline-none transition-all font-bold text-gray-900 appearance-none bg-white"
+                  >
+                    <option value="">Selecciona...</option>
+                    <option value="Sub-9">Sub-9</option>
+                    <option value="Sub-11">Sub-11</option>
+                    <option value="Sub-13">Sub-13</option>
+                    <option value="Sub-15">Sub-15</option>
+                    <option value="Sub-17">Sub-17</option>
+                    <option value="Libre">Libre</option>
+                  </select>
+                </div>
+
+                {/* Director Técnico */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Estrategia (Director Técnico)</label>
+                  <div className="relative">
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                     <select 
-                      name="categoria" 
-                      defaultValue={equipo.categoria} 
-                      className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent focus:border-red-500/30 rounded-2xl focus:bg-white transition-all font-bold text-gray-700 shadow-sm"
+                       name="tecnico_id" 
+                       defaultValue={equipo.tecnico_id || ''}
+                       className="w-full pl-12 pr-6 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-red-500/20 focus:ring-4 focus:ring-red-500/5 outline-none transition-all font-bold text-gray-900 appearance-none bg-white"
                     >
-                      <option value="Sub-17">Sub-17 (Juvenil)</option>
-                      <option value="Sub-15">Sub-15 (Cadete)</option>
-                      <option value="Sub-13">Sub-13 (Infantil)</option>
-                      <option value="Sub-10">Sub-10 (Benjamín)</option>
+                      <option value="">{loadingCoaches ? 'Cargando...' : 'Sin Técnico Asignado'}</option>
+                      {entrenadores.map(coach => (
+                        <option key={coach.id} value={coach.id}>
+                          {coach.nombre} {coach.apellido}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
 
-                {/* DATOS DE GESTIÓN */}
-                <div className="space-y-6">
-                  <div className="space-y-2.5">
-                    <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
-                      <User size={14} className="text-blue-500" /> Director Técnico Encargado
-                    </label>
+                {/* Sede */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Sede de Operaciones</label>
+                  <div className="relative">
+                    <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                     <input 
-                      name="tecnico" 
-                      defaultValue={equipo.tecnico || ''} 
-                      placeholder="Nombre del entrenador"
-                      className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent focus:border-blue-500/30 rounded-2xl focus:bg-white transition-all font-bold text-gray-900 shadow-sm" 
+                      name="sede" 
+                      defaultValue={equipo.sede || ''}
+                      className="w-full pl-12 pr-6 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-red-500/20 focus:ring-4 focus:ring-red-500/5 outline-none transition-all font-bold text-gray-900" 
                     />
-                  </div>
-                  <div className="grid grid-cols-2 gap-5">
-                    <div className="space-y-2.5">
-                      <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
-                        <MapPin size={14} className="text-emerald-500" /> Sede Principal
-                      </label>
-                      <input 
-                        name="sede" 
-                        defaultValue={equipo.sede || ''} 
-                        placeholder="Ej. Sede Norte"
-                        className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent focus:border-emerald-500/30 rounded-2xl focus:bg-white transition-all font-bold text-gray-900 shadow-sm" 
-                      />
-                    </div>
-                    <div className="space-y-2.5">
-                      <label className="text-[11px] font-black text-gray-400 uppercase tracking-widest ml-1 flex items-center gap-1.5">
-                        <Calendar size={14} className="text-gray-500" /> Año Fundación
-                      </label>
-                      <input 
-                        name="fundacion" 
-                        type="number"
-                        defaultValue={equipo.fundacion || 2013} 
-                        className="w-full px-6 py-4 bg-gray-50 border-2 border-transparent focus:border-gray-500/30 rounded-2xl focus:bg-white transition-all font-bold text-gray-900 shadow-sm" 
-                      />
-                    </div>
                   </div>
                 </div>
 
-                {/* LOGROS Y PALMARÉS */}
-                <div className="md:col-span-2 space-y-4 mt-4">
-                  <div className="flex items-center gap-3 text-xs font-black text-gray-400 uppercase tracking-[0.2em]">
-                    <div className="p-2 bg-yellow-100 text-yellow-600 rounded-lg">
-                      <Trophy size={16} />
-                    </div>
-                    Palmarés del Equipo (Listado Histórico)
-                  </div>
-                  <div className="relative group">
-                    <textarea 
-                      name="logros_raw" 
-                      defaultValue={logrosTexto}
-                      rows={5}
-                      placeholder="Escribe cada logro en una línea distinta..."
-                      className="w-full px-8 py-6 bg-gray-50 border-2 border-gray-100 rounded-[2.5rem] focus:bg-white focus:border-yellow-400/50 transition-all font-medium text-gray-800 text-sm custom-scrollbar leading-relaxed"
+                {/* Fundación */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Año de Inicio</label>
+                  <div className="relative">
+                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    <input 
+                      type="number" 
+                      name="fundacion" 
+                      defaultValue={equipo.fundacion || 2024}
+                      min="2010"
+                      max="2030"
+                      className="w-full pl-12 pr-6 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-red-500/20 focus:ring-4 focus:ring-red-500/5 outline-none transition-all font-bold text-gray-900" 
                     />
-                    <div className="absolute top-4 right-6 opacity-20 group-hover:opacity-100 transition-opacity">
-                      <Medal className="text-yellow-600" size={32} />
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3 px-6 py-3 bg-amber-50 rounded-2xl border border-amber-100">
-                    <div className="p-1 px-2 bg-amber-500 text-white text-[9px] font-black rounded-md uppercase">Tip</div>
-                    <p className="text-[11px] text-amber-700 font-bold italic">
-                      Cada línea que escribas aparecerá automáticamente con un icono de trofeo en la tarjeta principal.
-                    </p>
                   </div>
                 </div>
-
               </div>
 
-              {/* ACCIONES FINALES */}
-              <div className="mt-16 flex flex-col-reverse md:flex-row justify-end gap-6 pt-10 border-t border-gray-100">
+              {/* Botones de Acción */}
+              <div className="mt-12 flex items-center justify-between pt-8 border-t border-gray-100">
                 <button 
-                  type="button" 
-                  onClick={() => setIsOpen(false)} 
-                  className="px-10 py-5 text-gray-400 font-bold hover:text-gray-900 rounded-3xl transition-all text-xs uppercase tracking-[0.2em] hover:bg-gray-50"
+                  type="button"
+                  className="px-6 py-4 font-black text-[10px] text-red-500 uppercase tracking-widest hover:bg-red-50 rounded-2xl transition-all flex items-center gap-2"
                 >
-                  Cancelar Cambios
+                  <Trash2 size={16} />
+                  Eliminar Categoría
                 </button>
-                <button 
-                  type="submit" 
-                  disabled={isLoading} 
-                  className="px-14 py-5 bg-gray-950 text-white font-black rounded-3xl hover:bg-black shadow-2xl shadow-gray-950/20 transition-all active:scale-95 disabled:opacity-50 text-xs uppercase tracking-[0.2em] flex items-center justify-center gap-3"
-                >
-                  {isLoading ? (
-                    <><Loader2 className="animate-spin" size={20} /> Actualizando Registro...</>
-                  ) : 'Confirmar Cambios Master'}
-                </button>
+                
+                <div className="flex items-center gap-4">
+                    <button 
+                      type="button" 
+                      onClick={() => setIsOpen(false)}
+                      disabled={isLoading}
+                      className="px-6 py-4 font-black text-[10px] text-gray-400 uppercase tracking-widest hover:text-gray-900 transition-colors disabled:opacity-50"
+                    >
+                      Descartar
+                    </button>
+                    <button 
+                      type="submit" 
+                      disabled={isLoading}
+                      className="px-10 py-4 bg-gray-900 hover:bg-black text-white font-black text-[10px] uppercase tracking-widest rounded-2xl transition-all shadow-xl shadow-gray-200 flex items-center justify-center min-w-[180px] disabled:opacity-70 active:scale-95"
+                    >
+                      {isLoading ? (
+                        <div className="flex items-center gap-2">
+                           <Loader2 size={16} className="animate-spin" />
+                           Sincronizando...
+                        </div>
+                      ) : 'Confirmar Cambios'}
+                    </button>
+                </div>
               </div>
             </form>
           </div>

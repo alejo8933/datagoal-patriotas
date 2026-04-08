@@ -16,17 +16,33 @@ export async function crearUsuario(formData: FormData) {
   const posicion = formData.get('posicion')?.toString()
   const categoria = formData.get('categoria')?.toString()
 
-  if (!email || !password || !rol || !nombre || !apellido) {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  if (!email || !emailRegex.test(email)) {
     return {
       success: false,
-      message: 'Nombre, Apellido, Email, Contraseña y Rol son obligatorios.',
+      message: 'Por favor, ingresa un correo electrónico válido.',
     }
   }
 
-  if (password.length < 6) {
+  if (!password || password.length < 8) {
     return {
       success: false,
-      message: 'La contraseña debe tener al menos 6 caracteres.',
+      message: 'La contraseña debe tener al menos 8 caracteres para mayor seguridad.',
+    }
+  }
+
+  const rolesPermitidos = ['admin', 'entrenador', 'jugador', 'auxiliar', 'coordinador']
+  if (!rol || !rolesPermitidos.includes(rol)) {
+    return {
+      success: false,
+      message: 'El rol seleccionado no es válido.',
+    }
+  }
+
+  if (!nombre || !apellido) {
+    return {
+      success: false,
+      message: 'Nombre y Apellido son obligatorios.',
     }
   }
 
@@ -112,6 +128,13 @@ export async function editarUsuario(formData: FormData) {
 
   if (!id || !rol) {
     return { success: false, message: 'ID y Rol son obligatorios.' }
+  }
+
+  if (telefono && (!/^\d+$/.test(telefono) || telefono.length < 7 || telefono.length > 15)) {
+    return {
+      success: false,
+      message: 'El teléfono debe contener solo números (entre 7 y 15 dígitos).',
+    }
   }
 
   const { error } = await supabaseAdmin

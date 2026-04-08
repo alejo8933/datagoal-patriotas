@@ -75,11 +75,30 @@ export default function ModalEditarJugador({ jugador }: ModalEditarJugadorProps)
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label htmlFor="nombre" className="text-sm font-medium text-gray-700">Nombre <span className="text-red-500">*</span></label>
-                    <input required type="text" id="nombre" name="nombre" defaultValue={jugador.nombre} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition" />
+                    <input 
+                      required 
+                      type="text" 
+                      id="nombre" 
+                      name="nombre" 
+                      defaultValue={jugador.nombre} 
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition" 
+                      pattern="[A-Za-zÀ-ÿ\s]+" 
+                      title="Solo letras"
+                    />
                   </div>
                   <div className="space-y-1.5">
                     <label htmlFor="apellido" className="text-sm font-medium text-gray-700">Apellido <span className="text-red-500">*</span></label>
-                    <input required type="text" id="apellido" name="apellido" defaultValue={jugador.apellido} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition" />
+                    <input 
+                      required 
+                      type="text" 
+                      id="apellido" 
+                      name="apellido" 
+                      defaultValue={jugador.apellido} 
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition" 
+                      placeholder="Ej: García" 
+                      pattern="[A-Za-zÀ-ÿ\s]+" 
+                      title="Solo letras"
+                    />
                   </div>
                 </div>
 
@@ -109,7 +128,15 @@ export default function ModalEditarJugador({ jugador }: ModalEditarJugadorProps)
                   </div>
                   <div className="space-y-1.5">
                     <label htmlFor="numero_camiseta" className="text-sm font-medium text-gray-700">N° Camiseta</label>
-                    <input type="number" id="numero_camiseta" name="numero_camiseta" defaultValue={jugador.numero_camiseta || ''} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition" />
+                    <input 
+                      type="number" 
+                      min="1" 
+                      max="99" 
+                      id="numero_camiseta" 
+                      name="numero_camiseta" 
+                      defaultValue={jugador.numero_camiseta || ''} 
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition" 
+                    />
                   </div>
                 </div>
               </div>

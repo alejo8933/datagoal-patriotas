@@ -17,6 +17,14 @@ export async function registrarPago(formData: FormData) {
     }
   }
 
+  const montoNum = parseFloat(monto)
+  if (isNaN(montoNum) || montoNum <= 0) {
+    return {
+      success: false,
+      message: 'El monto debe ser un valor numérico superior a cero.',
+    }
+  }
+
   // Insertar en la tabla de facturas/pagos (Asumimos public.facturas para este prototipo)
   const { data, error } = await supabase
     .from('facturas')
@@ -59,6 +67,14 @@ export async function anadirGasto(formData: FormData) {
     return {
       success: false,
       message: 'El Concepto, el Monto y la Fecha son obligatorios.',
+    }
+  }
+
+  const montoNum = parseFloat(monto)
+  if (isNaN(montoNum) || montoNum <= 0) {
+    return {
+      success: false,
+      message: 'El monto del gasto debe ser un valor numérico superior a cero.',
     }
   }
 

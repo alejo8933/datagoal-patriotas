@@ -11,8 +11,6 @@ export async function crearJugador(formData: FormData) {
   const apellido = formData.get('apellido')?.toString().trim()
   const posicion = formData.get('posicion')?.toString().trim()
   const categoria = formData.get('categoria')?.toString().trim()
-  const numero_camiseta_raw = formData.get('numero_camiseta')
-
   // Validación Base de Servidor (Lo que el jefe verá como robusto)
   if (!nombre || !apellido || !categoria) {
     return {
@@ -21,8 +19,30 @@ export async function crearJugador(formData: FormData) {
     }
   }
 
-  // Parseo numérico opcional
+  // 1. Validación de Rango (Dorsal)
   const numero_camiseta = numero_camiseta_raw ? parseInt(numero_camiseta_raw.toString(), 10) : null
+  if (numero_camiseta !== null && (numero_camiseta < 1 || numero_camiseta > 99)) {
+    return {
+      success: false,
+      message: 'El número de camiseta debe estar entre 1 y 99.',
+    }
+  }
+
+  // 2. Verificación de Duplicados
+  const { data: existente } = await supabase
+    .from('jugadores')
+    .select('id')
+    .eq('nombre', nombre)
+    .eq('apellido', apellido)
+    .eq('categoria', categoria)
+    .single()
+
+  if (existente) {
+    return {
+      success: false,
+      message: `Ya existe un jugador llamado ${nombre} ${apellido} en la categoría ${categoria}.`,
+    }
+  }
 
   // Inserción a la base de datos
   const { data, error } = await supabase

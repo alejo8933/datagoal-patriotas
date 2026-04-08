@@ -3,105 +3,93 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
+/**
+ * Crea un nuevo equipo con validaciones de integridad y relación con técnico
+ */
 export async function crearEquipo(formData: FormData) {
-  const supabase = await createClient()
+  try {
+    const supabase = createClient()
+    
+    const equipo = formData.get('equipo') as string
+    const categoria = formData.get('categoria') as string
+    const tecnico_id = formData.get('tecnico_id') as string
+    const sede = formData.get('sede') as string
+    const fundacion = parseInt(formData.get('fundacion') as string) || 2024
 
-  const equipo = formData.get('equipo')?.toString().trim()
-  const categoria = formData.get('categoria')?.toString().trim()
-
-  // Validación
-  if (!equipo || !categoria) {
-    return {
-      success: false,
-      message: 'El Nombre del Equipo y la Categoría son obligatorios.',
+    // Validaciones de Servidor
+    if (!equipo || !categoria) {
+      return { success: false, message: 'Nombre y categoría son obligatorios.' }
     }
-  }
 
-  // Inserción, la tabla es rendimiento_equipos en el esquema public
-  const { data, error } = await supabase
-    .from('rendimiento_equipos')
-    .insert([
-      {
-        equipo,
-        categoria,
-        partidos: 0,
-        ganados: 0,
-        empatados: 0,
-        perdidos: 0,
-        goles_favor: 0,
-        goles_contra: 0,
-        puntos: 0
-      },
-    ])
-    .select()
+    // Verificar unicidad de equipo + categoría
+    const { data: existente } = await supabase
+      .from('rendimiento_equipos')
+      .select('id')
+      .eq('equipo', equipo)
+      .eq('categoria', categoria)
+      .single()
 
-  if (error) {
-    console.error('Error insertando equipo:', error)
-    return {
-      success: false,
-      message: 'Ha ocurrido un error insertando el equipo en la base de datos.',
-      error: error.message,
+    if (existente) {
+      return { success: false, message: 'Ya existe este equipo en la categoría seleccionada.' }
     }
-  }
 
-  // Revalidar caché de Next.js
-  revalidatePath('/dashboard/admin/equipos')
+    const { error } = await supabase
+      .from('rendimiento_equipos')
+      .insert([
+        { 
+          equipo, 
+          categoria, 
+          tecnico_id: tecnico_id || null, 
+          sede: sede || 'Sede Principal', 
+          fundacion 
+        }
+      ])
 
-  return {
-    success: true,
-    message: 'Equipo creado exitosamente.',
-    data,
+    if (error) throw error
+
+    revalidatePath('/dashboard/admin/equipos')
+    return { success: true }
+  } catch (error: any) {
+    console.error('Error creating team:', error)
+    return { success: false, message: error.message }
   }
 }
 
+/**
+ * Edita un equipo existente
+ */
 export async function editarEquipo(formData: FormData) {
-  const supabase = await createClient()
+  try {
+    const supabase = createClient()
+    
+    const id = formData.get('id') as string
+    const equipo = formData.get('equipo') as string
+    const categoria = formData.get('categoria') as string
+    const tecnico_id = formData.get('tecnico_id') as string
+    const sede = formData.get('sede') as string
+    const fundacion = parseInt(formData.get('fundacion') as string) || 2024
 
-  const id = formData.get('id')?.toString()
-  const equipo = formData.get('equipo')?.toString().trim()
-  const categoria = formData.get('categoria')?.toString().trim()
-  const imagen_url = formData.get('imagen_url')?.toString().trim()
-  const tecnico = formData.get('tecnico')?.toString().trim()
-  const sede = formData.get('sede')?.toString().trim()
-  const fundacionRaw = formData.get('fundacion')?.toString()
-  const fundacion = fundacionRaw && !isNaN(parseInt(fundacionRaw)) ? parseInt(fundacionRaw) : 2013
-  const logros_raw = formData.get('logros_raw')?.toString().trim()
-
-  // Procesar logros (String a Array)
-  const logros = logros_raw ? logros_raw.split('\n').filter(l => l.trim() !== '') : []
-
-  if (!id || !equipo || !categoria) {
-    return {
-      success: false,
-      message: 'ID, Nombre del Equipo y Categoría son obligatorios.',
+    if (!id || !equipo) {
+      return { success: false, message: 'Datos incompletos para actualizar.' }
     }
-  }
 
-  const { error } = await supabase
-    .from('rendimiento_equipos')
-    .update({ 
-      equipo, 
-      categoria,
-      imagen_url: imagen_url || null,
-      tecnico: tecnico || null,
-      sede: sede || null,
-      fundacion: fundacion,
-      logros: logros
-    })
-    .eq('id', id)
+    const { error } = await supabase
+      .from('rendimiento_equipos')
+      .update({ 
+        equipo, 
+        categoria, 
+        tecnico_id: tecnico_id || null, 
+        sede, 
+        fundacion 
+      })
+      .eq('id', id)
 
-  if (error) {
-    console.error('Error editando equipo:', error)
-    return {
-      success: false,
-      message: 'Error al actualizar el equipo técnico: ' + error.message,
-    }
-  }
+    if (error) throw error
 
-  revalidatePath('/dashboard/admin/equipos')
-
-  return {
-    success: true,
-    message: 'Equipo actualizado correctamente con perfil premium.',
+    revalidatePath('/dashboard/admin/equipos')
+    return { success: true }
+  } catch (error: any) {
+    console.error('Error updating team:', error)
+    return { success: false, message: error.message }
   }
 }
