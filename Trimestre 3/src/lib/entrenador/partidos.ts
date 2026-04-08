@@ -88,13 +88,12 @@ export async function agregarEvento(formData: FormData): Promise<void> {
     }
   }
 
-  revalidatePath(`/dashboard/entrenador/partidos/${partidoId}`);
+  revalidatePath(`/dashboard/entrenador/partidos`);
 }
 
 export async function eliminarEvento(formData: FormData): Promise<void> {
   const supabase = await createClient();
   const id = formData.get("id") as string;
-  const partidoId = formData.get("partido_id") as string;
   await supabase.from("eventos_partido").delete().eq("id", id);
-  revalidatePath(`/dashboard/entrenador/partidos/${partidoId}`);
+  revalidatePath(`/dashboard/entrenador/partidos`);
 }

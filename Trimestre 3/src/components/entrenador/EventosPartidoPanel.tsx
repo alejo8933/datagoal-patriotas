@@ -1,15 +1,31 @@
 "use client";
-import { useTransition, useRef } from "react";
+import { useState, useMemo, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { agregarEvento, eliminarEvento } from "@/lib/entrenador/partidos";
-import { Trash2, Loader2 } from "lucide-react";
+import { Trash2, Plus } from "lucide-react";
+import ModalRegistrarEvento from "./ModalRegistrarEvento";
+import { eliminarEvento } from "@/lib/entrenador/partidos";
 
-const TIPO_ICON: Record<string, string> = {
-  gol:              "⚽",
-  tarjeta_amarilla: "🟨",
-  tarjeta_roja:     "🟥",
-  cambio:           "🔄",
-  otro:             "📋",
+// Tipos extraídos para uso Client Side
+type Partido = {
+  id: string;
+  equipo_local: string;
+  equipo_visitante: string;
+  fecha: string;
+  hora: string;
+  lugar: string;
+  estado: string;
+  goles_local: number | null;
+  goles_visitante: number | null;
+};
+
+type Evento = {
+  id: string;
+  minuto: number;
+  tipo: string;
+  equipo: string;
+  descripcion: string;
+  created_at: string;
+  jugadores: { id: string; nombre: string; apellido: string; numero_camiseta: number } | null;
 };
 
 type Jugador = {
@@ -20,180 +36,233 @@ type Jugador = {
   posicion: string | null;
 };
 
-type Evento = {
-  id: string;
-  minuto: number | null;
-  tipo: string;
-  equipo: string | null;
-  descripcion: string | null;
-  jugadores: { id: string; nombre: string; apellido: string; numero_camiseta: number | null }[] | null;
-};
-
-export default function EventosPartidoPanel({
-  partido,
-  eventos,
-  jugadores,
-}: {
-  partido: any;
+interface Props {
+  partidos: Partido[];
+  partidoId: string;
   eventos: Evento[];
   jugadores: Jugador[];
-}) {
+}
+
+export default function EventosPartidoPanel({ partidos, partidoId, eventos, jugadores }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const formRef = useRef<HTMLFormElement>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [minutoInput, setMinutoInput] = useState("45");
 
-  async function handleAgregar(formData: FormData) {
-    await agregarEvento(formData);
-    formRef.current?.reset();
-    startTransition(() => router.refresh());
-  }
+  const p = partidos.find(x => x.id === partidoId);
 
-  async function handleEliminar(formData: FormData) {
-    await eliminarEvento(formData);
-    startTransition(() => router.refresh());
+  // KPIs
+  const kpis = useMemo(() => {
+    let amarillas = 0, rojas = 0, cambios = 0;
+    eventos.forEach(ev => {
+      if (ev.tipo === "tarjeta_amarilla") amarillas++;
+      if (ev.tipo === "tarjeta_roja") rojas++;
+      if (ev.tipo === "cambio") cambios++;
+    });
+    // Los goles los tomamos del partido directamente (o sumando los eventos si prefieres)
+    const goles = (p?.goles_local || 0) + (p?.goles_visitante || 0);
+    return { goles, amarillas, rojas, cambios };
+  }, [eventos, p]);
+
+  const handleMatchSelect = (id: string) => {
+    startTransition(() => {
+      router.push(`/dashboard/entrenador/partidos?partidoId=${id}`);
+    });
+  };
+
+  const handleEliminarEvento = (id: string) => {
+    if (confirm("¿Estás seguro de eliminar este evento?")) {
+      const fd = new FormData();
+      fd.append("id", id);
+      fd.append("partido_id", partidoId);
+      startTransition(async () => {
+        await eliminarEvento(fd);
+      });
+    }
+  };
+
+  const renderIcon = (tipo: string) => {
+    if (tipo === "gol") return <span className="text-sm">⚽</span>;
+    if (tipo === "tarjeta_amarilla") return <span className="text-sm">🟨</span>;
+    if (tipo === "tarjeta_roja") return <span className="text-sm">🟥</span>;
+    if (tipo === "cambio") return <span className="text-sm">🔄</span>;
+    return <span>⏺</span>;
+  };
+
+  const renderBadge = (tipo: string) => {
+    if (tipo === "gol") return <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1.5">{renderIcon(tipo)} Gol</span>;
+    if (tipo === "tarjeta_amarilla") return <span className="bg-yellow-100 text-yellow-700 text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1.5">{renderIcon(tipo)} T. Amarilla</span>;
+    if (tipo === "tarjeta_roja") return <span className="bg-red-100 text-red-700 text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1.5">{renderIcon(tipo)} T. Roja</span>;
+    if (tipo === "cambio") return <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full flex items-center gap-1.5">{renderIcon(tipo)} Cambio</span>;
+    return <span className="bg-gray-100 text-gray-700 text-xs font-bold px-2 py-0.5 rounded-full">{tipo}</span>;
+  };
+
+  if (!p) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20">
+         <p className="text-gray-400">Selecciona o crea un partido primero.</p>
+      </div>
+    );
   }
 
   return (
     <div className="flex flex-col gap-6">
 
-      {/* Formulario agregar evento */}
-      <form
-        ref={formRef}
-        action={handleAgregar}
-        className="bg-white/5 border border-white/10 rounded-xl p-4 flex flex-col gap-3"
-      >
-        <h2 className="text-sm font-semibold text-white">Agregar evento</h2>
-        <input type="hidden" name="partido_id" value={partido.id} />
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Registro de Eventos</h1>
+          <p className="text-sm text-gray-500 mt-0.5">Registra eventos en tiempo real durante los partidos</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <select 
+            value={partidoId}
+            onChange={(e) => handleMatchSelect(e.target.value)}
+            disabled={isPending}
+            className="px-4 py-2 bg-gray-50 border border-gray-200 text-sm font-semibold text-gray-700 rounded-xl outline-none focus:border-red-500 w-full lg:w-[350px]"
+          >
+            {partidos.map((x) => (
+              <option key={x.id} value={x.id}>
+                {x.equipo_local} vs {x.equipo_visitante} • {new Date(x.fecha).toLocaleDateString()}
+              </option>
+            ))}
+          </select>
+        </div>
+      </div>
 
-        <div className="grid grid-cols-2 gap-3">
-          {/* Tipo */}
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-gray-400">Tipo *</label>
-            <select
-              name="tipo"
-              required
-              className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-            >
-              <option value="gol">⚽ Gol</option>
-              <option value="tarjeta_amarilla">🟨 Tarjeta amarilla</option>
-              <option value="tarjeta_roja">🟥 Tarjeta roja</option>
-              <option value="cambio">🔄 Cambio</option>
-              <option value="otro">📋 Otro</option>
-            </select>
+      {/* Tarjeta del Partido Global */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
+        {/* Superior: Info del Marcador */}
+        <div className="p-6 flex flex-col md:flex-row justify-between items-center gap-6 border-b border-gray-50">
+          <div className="flex flex-col items-center md:items-start text-center md:text-left gap-1">
+            <h2 className="text-xl md:text-2xl font-bold text-gray-900">
+              {p.equipo_local} <span className="text-gray-400 mx-2 text-lg">vs</span> {p.equipo_visitante}
+            </h2>
+            <p className="text-sm text-gray-400">
+              {p.fecha} • {p.hora ? p.hora.slice(0,5) : ''} • {p.lugar || 'Lugar por definir'}
+            </p>
           </div>
-
-          {/* Equipo */}
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-gray-400">Equipo *</label>
-            <select
-              name="equipo"
-              required
-              className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-            >
-              <option value="local">{partido.equipo_local} (Local)</option>
-              <option value="visitante">{partido.equipo_visitante} (Visitante)</option>
-            </select>
+          
+          <div className="flex flex-col items-center justify-center shrink-0 min-w-[120px]">
+             <div className="text-4xl font-black text-gray-900 tracking-wider">
+               {p.goles_local ?? 0} - {p.goles_visitante ?? 0}
+             </div>
+             <div className="mt-2 bg-red-600 text-white text-[11px] font-bold uppercase tracking-widest px-3 py-1 rounded-full shadow-sm">
+               En Curso
+             </div>
           </div>
+        </div>
 
-          {/* Jugador */}
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-gray-400">Jugador</label>
-            <select
-              name="jugador_id"
-              className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-            >
-              <option value="">— Sin jugador —</option>
-              {jugadores.map((j) => (
-                <option key={j.id} value={j.id}>
-                  #{j.numero_camiseta ?? "?"} {j.apellido}, {j.nombre}
-                </option>
-              ))}
-            </select>
+        {/* Inferior: KPIs */}
+        <div className="grid grid-cols-2 md:grid-cols-4 divide-x divide-gray-50 py-4 bg-gray-50/30">
+          <div className="flex flex-col items-center justify-center py-2">
+            <span className="text-2xl font-bold text-green-600">{kpis.goles}</span>
+            <span className="text-xs text-gray-400 font-medium mt-1">Goles</span>
           </div>
+          <div className="flex flex-col items-center justify-center py-2">
+            <span className="text-2xl font-bold text-yellow-500">{kpis.amarillas}</span>
+            <span className="text-xs text-gray-400 font-medium mt-1">T. Amarillas</span>
+          </div>
+          <div className="flex flex-col items-center justify-center py-2">
+            <span className="text-2xl font-bold text-red-500">{kpis.rojas}</span>
+            <span className="text-xs text-gray-400 font-medium mt-1">T. Rojas</span>
+          </div>
+          <div className="flex flex-col items-center justify-center py-2">
+            <span className="text-2xl font-bold text-blue-500">{kpis.cambios}</span>
+            <span className="text-xs text-gray-400 font-medium mt-1">Cambios</span>
+          </div>
+        </div>
+      </div>
 
-          {/* Minuto */}
-          <div className="flex flex-col gap-1">
-            <label className="text-xs text-gray-400">Minuto</label>
-            <input
-              type="number"
-              name="minuto"
-              min={1}
-              max={120}
-              placeholder="Ej: 45"
-              className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
+      {/* Caja de Control */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col gap-4">
+        <div className="flex items-center gap-2 text-gray-800 font-bold border-b border-gray-50 pb-3">
+          <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" strokeWidth="2.5" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>
+          Control del Partido
+        </div>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3">
+            <label className="text-sm font-bold text-gray-700">Minuto actual:</label>
+            <input 
+              type="text" 
+              value={minutoInput}
+              onChange={(e) => setMinutoInput(e.target.value)}
+              className="w-16 px-3 py-2 text-center text-sm font-bold bg-gray-50 border border-gray-200 rounded-lg outline-none focus:border-red-500" 
             />
           </div>
+          <button 
+            onClick={() => setIsModalOpen(true)}
+            className="bg-red-600 hover:bg-red-700 text-white px-5 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2 transition-colors shadow-sm"
+          >
+            <Plus className="w-4 h-4" /> Registrar Evento
+          </button>
         </div>
+      </div>
 
-        {/* Descripción */}
-        <div className="flex flex-col gap-1">
-          <label className="text-xs text-gray-400">Descripción (opcional)</label>
-          <input
-            type="text"
-            name="descripcion"
-            placeholder="Detalles del evento..."
-            className="bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-white placeholder-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500/40"
-          />
-        </div>
-
-        <button
-          type="submit"
-          disabled={isPending}
-          className="flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold py-2 rounded-lg transition disabled:opacity-50"
-        >
-          {isPending ? <Loader2 size={16} className="animate-spin" /> : "Registrar evento"}
-        </button>
-      </form>
-
-      {/* Lista de eventos */}
-      <div>
-        <h2 className="text-sm font-semibold text-white mb-3">
-          Eventos registrados ({eventos.length})
-        </h2>
-
+      {/* Tabla de Eventos */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 overflow-hidden">
+        <h3 className="text-lg font-bold text-gray-900 leading-tight">Eventos del Partido</h3>
+        <p className="text-xs text-gray-400 mt-0.5 mb-5">Cronología de todos los eventos registrados</p>
+        
         {eventos.length === 0 ? (
-          <div className="text-center py-10 text-gray-500 bg-white/5 rounded-xl border border-white/10">
-            <p className="text-3xl mb-2">📋</p>
-            <p className="text-sm">Sin eventos registrados aún</p>
+          <div className="text-center py-10 bg-gray-50/50 rounded-xl border border-dashed border-gray-200">
+             <p className="text-gray-400 text-sm">No hay eventos para mostrar.</p>
           </div>
         ) : (
-          <div className="flex flex-col gap-2">
-            {eventos.map((e) => (
-              <div
-                key={e.id}
-                className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 flex items-center justify-between"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-xl">{TIPO_ICON[e.tipo] ?? "📋"}</span>
-                  <div>
-                    <p className="text-white text-sm font-medium">
-                     {e.jugadores && e.jugadores.length > 0
-                        ? `${e.jugadores[0].apellido}, ${e.jugadores[0].nombre} (#${e.jugadores[0].numero_camiseta ?? "?"})`
-                    : "Sin jugador"}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {e.equipo === "local" ? partido.equipo_local : partido.equipo_visitante}
-                      {e.minuto ? ` · min. ${e.minuto}` : ""}
-                      {e.descripcion ? ` · ${e.descripcion}` : ""}
-                    </p>
-                  </div>
-                </div>
-
-                <form action={handleEliminar}>
-                  <input type="hidden" name="id" value={e.id} />
-                  <input type="hidden" name="partido_id" value={partido.id} />
-                  <button
-                    type="submit"
-                    className="text-gray-500 hover:text-red-400 transition p-1.5 rounded-lg hover:bg-red-500/10"
-                  >
-                    <Trash2 size={15} />
-                  </button>
-                </form>
-              </div>
-            ))}
+          <div className="overflow-x-auto">
+             <table className="w-full text-sm">
+                <thead>
+                   <tr className="border-b border-gray-100 text-left">
+                     <th className="py-3 px-2 text-gray-400 text-xs font-bold uppercase tracking-wider w-16">Minuto</th>
+                     <th className="py-3 px-2 text-gray-400 text-xs font-bold uppercase tracking-wider w-40">Evento</th>
+                     <th className="py-3 px-2 text-gray-400 text-xs font-bold uppercase tracking-wider">Jugador</th>
+                     <th className="py-3 px-2 text-gray-400 text-xs font-bold uppercase tracking-wider">Equipo</th>
+                     <th className="py-3 px-2 text-gray-400 text-xs font-bold uppercase tracking-wider">Descripción</th>
+                     <th className="py-3 px-2 text-gray-400 text-xs font-bold uppercase tracking-wider text-center">Acciones</th>
+                   </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-50">
+                   {eventos.map(ev => (
+                      <tr key={ev.id} className="hover:bg-gray-50/50 transition-colors">
+                         <td className="py-4 px-2 font-bold text-gray-900">{ev.minuto}'</td>
+                         <td className="py-4 px-2">
+                           {renderBadge(ev.tipo)}
+                         </td>
+                         <td className="py-4 px-2">
+                           <div className="flex flex-col">
+                             <span className="font-bold text-gray-800">
+                               {ev.jugadores ? `${ev.jugadores.nombre} ${ev.jugadores.apellido}` : 'Desconocido'}
+                             </span>
+                           </div>
+                         </td>
+                         <td className="py-4 px-2">
+                           <span className={`text-[10px] font-bold uppercase tracking-widest ${ev.equipo === 'local' ? 'text-gray-600' : 'text-blue-600'}`}>
+                              {ev.equipo}
+                           </span>
+                         </td>
+                         <td className="py-4 px-2 text-gray-500 font-medium truncate max-w-xs text-xs">
+                           {ev.descripcion || '—'}
+                         </td>
+                         <td className="py-4 px-2 text-center">
+                           <button onClick={() => handleEliminarEvento(ev.id)} className="p-1.5 text-gray-300 hover:text-red-500 transition border border-gray-100 rounded-lg hover:border-red-100 hover:bg-red-50 inline-flex items-center justify-center">
+                             <Trash2 className="w-3.5 h-3.5" />
+                           </button>
+                         </td>
+                      </tr>
+                   ))}
+                </tbody>
+             </table>
           </div>
         )}
       </div>
+
+      {isModalOpen && (
+        <ModalRegistrarEvento 
+           partidoId={partidoId}
+           minuto={minutoInput}
+           jugadores={jugadores}
+           onClose={() => setIsModalOpen(false)}
+        />
+      )}
     </div>
   );
 }

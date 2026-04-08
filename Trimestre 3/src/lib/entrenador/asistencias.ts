@@ -51,7 +51,8 @@ export async function guardarAsistencia(
   jugadorId: string,
   entrenamientoId: string,
   presente: boolean,
-  excusa?: string
+  excusa?: string,
+  hora_llegada?: string
 ) {
   const supabase = await createClient();
   await supabase
@@ -62,7 +63,67 @@ export async function guardarAsistencia(
         entrenamiento_id: entrenamientoId,
         presente,
         excusa: excusa ?? null,
+        hora_llegada: hora_llegada ?? null,
       },
       { onConflict: "jugador_id,entrenamiento_id" }
     );
+}
+
+export async function guardarAsistenciasBulk(
+  entrenamientoId: string,
+  asistencias: {
+    jugadorId: string;
+    presente: boolean | null;
+    excusa?: string;
+    horaLlegada?: string;
+    notas?: string;
+  }[]
+) {
+  const supabase = await createClient();
+  
+  // Mapeamos a la estructura de la DB. Si 'notas' existe y no hay 'excusa', la ponemos en 'excusa',
+  // o podemos dejarlas si luego se agregan. Por ahora 'excusa' albergaría el texto principal.
+  const payload = asistencias.map((a) => ({
+    jugador_id: a.jugadorId,
+    entrenamiento_id: entrenamientoId,
+    presente: a.presente ?? false,
+    excusa: a.notas ? a.notas : (a.excusa ?? null), 
+    hora_llegada: a.horaLlegada ?? null,
+  }));
+
+  await supabase
+    .from("asistencias")
+    .upsert(payload, { onConflict: "jugador_id,entrenamiento_id" });
+}
+
+export async function getReportesAsistencia() {
+  const supabase = await createClient();
+
+  const { data: jugadores } = await supabase
+    .from("jugadores")
+    .select("id, nombre, apellido, posicion, categoria, numero_camiseta")
+    .eq("activo", true)
+    .order("apellido", { ascending: true });
+
+  const { data: asistencias } = await supabase
+    .from("asistencias")
+    .select("jugador_id, presente");
+
+  const records = asistencias ?? [];
+  
+  return (jugadores ?? []).map((j) => {
+    const playerRecords = records.filter(a => a.jugador_id === j.id);
+    const total = playerRecords.length;
+    const presentes = playerRecords.filter(a => a.presente === true).length;
+    const ausentes = total - presentes;
+    const porcentaje = total > 0 ? (presentes / total) * 100 : 0;
+
+    return {
+      ...j,
+      totalEntrenamientos: total,
+      presentes,
+      ausentes,
+      porcentajeTotal: porcentaje,
+    };
+  });
 }
