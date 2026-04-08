@@ -23,20 +23,78 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Refresca la sesión automáticamente
   const { data: { user } } = await supabase.auth.getUser()
-
   const { pathname } = request.nextUrl
 
-  // ── Rutas protegidas ──────────────────────────────────────────
-  // Si no hay sesión e intenta entrar al dashboard → redirige al login
+  // ── Sin sesión → login ────────────────────────────────────────
   if (pathname.startsWith('/dashboard') && !user) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  // Si ya tiene sesión e intenta ir al login o registro → redirige al dashboard
+  // ── Con sesión → no dejar entrar a login/registro ─────────────
   if ((pathname === '/login' || pathname === '/registro') && user) {
-    return NextResponse.redirect(new URL('/dashboard', request.url))
+    // Redirigir según rol
+    const { data: perfil } = await supabase
+      .from('perfiles')
+      .select('rol')
+      .eq('id', user.id)
+      .single()
+
+    const destinos: Record<string, string> = {
+      admin:        '/dashboard/admin',
+      entrenador:   '/dashboard/entrenador',
+      jugador:      '/dashboard/jugador',
+    }
+
+    const destino = destinos[perfil?.rol ?? ''] ?? '/dashboard'
+    return NextResponse.redirect(new URL(destino, request.url))
+  }
+
+  // ── Verificación de rol por ruta ──────────────────────────────
+  const rutasProtegidas = [
+    '/dashboard/admin',
+    '/dashboard/entrenador',
+    '/dashboard/jugador',
+  ]
+
+  const rutaProtegida = rutasProtegidas.find(r => pathname.startsWith(r))
+
+  if (user && rutaProtegida) {
+    const { data: perfil } = await supabase
+      .from('perfiles')
+      .select('rol')
+      .eq('id', user.id)
+      .single()
+
+    const rol = perfil?.rol
+
+    const rolesPermitidos: Record<string, string> = {
+      '/dashboard/admin':      'admin',
+      '/dashboard/entrenador': 'entrenador',
+      '/dashboard/jugador':    'jugador',
+    }
+
+    if (rol !== rolesPermitidos[rutaProtegida]) {
+      return NextResponse.redirect(new URL('/no-autorizado', request.url))
+    }
+  }
+
+  // ── Redirigir /dashboard genérico según rol ───────────────────
+  if (pathname === '/dashboard' && user) {
+    const { data: perfil } = await supabase
+      .from('perfiles')
+      .select('rol')
+      .eq('id', user.id)
+      .single()
+
+    const destinos: Record<string, string> = {
+      admin:      '/dashboard/admin',
+      entrenador: '/dashboard/entrenador',
+      jugador:    '/dashboard/jugador',
+    }
+
+    const destino = destinos[perfil?.rol ?? ''] ?? '/'
+    return NextResponse.redirect(new URL(destino, request.url))
   }
 
   return response
@@ -44,13 +102,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Aplica el middleware a todas las rutas excepto:
-     * - _next/static
-     * - _next/image
-     * - favicon.ico
-     * - archivos con extensión (png, jpg, etc.)
-     */
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
 }

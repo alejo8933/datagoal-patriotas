@@ -1,16 +1,34 @@
+import { createClient } from '@/lib/supabase/server'
+import { redirect } from 'next/navigation'
 import HeaderEntrenador from '@/components/layout/HeaderEntrenador'
 
-export default function EntrenadorLayout({
+export default async function EntrenadorLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+
+  if (!user) redirect('/login')
+
+  // Verificar rol en tabla perfiles
+  const { data: perfil } = await supabase
+    .from('perfiles')
+    .select('rol')
+    .eq('id', user.id)
+    .single()
+
+  if (perfil?.rol !== 'entrenador') redirect('/no-autorizado')
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <>
       <HeaderEntrenador />
-      <main className="mx-auto max-w-7xl px-6 py-8">
-        {children}
+      <main className="min-h-screen bg-gray-50">
+        <div className="mx-auto max-w-7xl px-6 py-8">
+          {children}
+        </div>
       </main>
-    </div>
+    </>
   )
 }

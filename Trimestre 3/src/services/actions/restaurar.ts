@@ -1,43 +1,18 @@
-'use server'
+"use server";
+import { createClient } from "@/lib/supabase/server";
+import { revalidatePath } from "next/cache";
 
-import { createClient } from '@/lib/supabase/server'
-import { revalidatePath } from 'next/cache'
+export async function restaurarRegistro(formData: FormData): Promise<void> {
+  const supabase = await createClient();
+  const id = formData.get("id") as string;
+  const tabla = formData.get("tabla") as string;
+  const path = formData.get("path") as string;
 
-export async function restaurarRegistro(formData: FormData) {
-  const supabase = await createClient()
-
-  const tabla = formData.get('tabla')?.toString()
-  const id = formData.get('id')?.toString()
-  const path = formData.get('path')?.toString() || '/dashboard/admin/archivo'
-
-  if (!tabla || !id) {
-    return { success: false, message: 'Faltan parámetros de restauración.' }
+  if (tabla === "partidos") {
+    await supabase.from(tabla).update({ estado: "programado" }).eq("id", id);
+  } else {
+    await supabase.from(tabla).update({ activo: true }).eq("id", id);
   }
 
-  try {
-    let result;
-
-    if (tabla === 'partidos') {
-      // Restauramos al estado por defecto 'Programado'
-      result = await supabase.from(tabla).update({ estado: 'Programado' }).eq('id', id)
-    } else {
-      // Para la mayoría de tablas usamos la columna 'activo'
-      result = await supabase.from(tabla).update({ activo: true }).eq('id', id)
-    }
-
-    if (result.error) throw result.error
-
-    // Revalidamos tanto el archivo como la página de origen
-    revalidatePath('/dashboard/admin/archivo')
-    revalidatePath(path)
-
-    return { 
-      success: true, 
-      message: 'Registro restaurado y devuelto a la sección correspondiente.' 
-    }
-
-  } catch (err: any) {
-    console.error('Error restaurando:', err)
-    return { success: false, message: err.message || 'Error al restaurar.' }
-  }
+  revalidatePath(path);
 }
