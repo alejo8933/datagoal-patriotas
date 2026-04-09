@@ -1,7 +1,7 @@
 "use client";
 import { useState, useTransition } from "react";
 import { X, Loader2, Save } from "lucide-react";
-import { agregarEvento } from "@/lib/entrenador/partidos";
+import { agregarEvento } from "@/lib/entrenador/actions";
 
 interface Jugador {
   id: string;

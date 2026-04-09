@@ -3,7 +3,7 @@ import { useState, useMemo, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { Trash2, Plus } from "lucide-react";
 import ModalRegistrarEvento from "./ModalRegistrarEvento";
-import { eliminarEvento } from "@/lib/entrenador/partidos";
+import { eliminarEvento } from "@/lib/entrenador/actions";
 
 // Tipos extraídos para uso Client Side
 type Partido = {
