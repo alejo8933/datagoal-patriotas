@@ -38,6 +38,7 @@ export default async function AdminLayout({ children }: { children: ReactNode })
         
         {/* Header superior de Navegación y Perfil */}
         <AdminHeader 
+          userId={user.id}
           email={user.email} 
           nombre={perfil.nombre || 'Administrador'} 
           apellido={perfil.apellido || ''} 

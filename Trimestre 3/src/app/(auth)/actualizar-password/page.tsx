@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Eye, EyeOff, CheckCircle2, ShieldCheck } from 'lucide-react'
 import { authService } from '@/services/api/authService'
 
 export default function ActualizarPasswordPage() {
@@ -13,6 +13,17 @@ export default function ActualizarPasswordPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+
+  const validationCriteria = {
+    length: password.length >= 8,
+    upper: /[A-Z]/.test(password),
+    lower: /[a-z]/.test(password),
+    number: /[0-9]/.test(password),
+  }
+
+  const isPasswordValid = Object.values(validationCriteria).every(v => v)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -22,8 +33,8 @@ export default function ActualizarPasswordPage() {
       return
     }
     
-    if (password.length < 6) {
-      setError('La contraseña debe tener al menos 6 caracteres.')
+    if (!isPasswordValid) {
+      setError('La contraseña no cumple con los requisitos mínimos de seguridad.')
       return
     }
 
@@ -78,40 +89,71 @@ export default function ActualizarPasswordPage() {
 
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium text-gray-700">Nueva contraseña</label>
-              <div className="flex items-center border-2 border-gray-400 rounded-lg px-3 py-2 gap-2 bg-white focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-100">
+              <div className="flex items-center border-2 border-gray-400 rounded-lg px-3 py-2 gap-2 bg-white focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-100 relative group transition-all">
                 <span className="text-gray-400">🔒</span>
                 <input
-                  type="password"
-                  placeholder="••••••••"
+                  type={showPassword ? "text" : "password"}
+                  placeholder="Min. 8 caracteres"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   className="flex-1 text-sm outline-none bg-transparent text-gray-900 placeholder:text-gray-400"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              {/* Panel de Requisitos */}
+              <div className="grid grid-cols-2 gap-2 mt-2 bg-gray-50 p-3 rounded-xl border border-gray-100">
+                <RequirementItem met={validationCriteria.length} label="Mín. 8 caracteres" />
+                <RequirementItem met={validationCriteria.upper} label="Letra mayúscula" />
+                <RequirementItem met={validationCriteria.lower} label="Letra minúscula" />
+                <RequirementItem met={validationCriteria.number} label="Un número" />
               </div>
             </div>
             
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium text-gray-700">Confirmar contraseña</label>
-              <div className="flex items-center border-2 border-gray-400 rounded-lg px-3 py-2 gap-2 bg-white focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-100">
+              <div className="flex items-center border-2 border-gray-400 rounded-lg px-3 py-2 gap-2 bg-white focus-within:border-red-500 focus-within:ring-2 focus-within:ring-red-100 relative group transition-all">
                 <span className="text-gray-400">🔒</span>
                 <input
-                  type="password"
+                  type={showConfirm ? "text" : "password"}
                   placeholder="••••••••"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   required
                   className="flex-1 text-sm outline-none bg-transparent text-gray-900 placeholder:text-gray-400"
                 />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm(!showConfirm)}
+                  className="text-gray-400 hover:text-gray-600 focus:outline-none"
+                >
+                  {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
+              {confirmPassword && password !== confirmPassword && (
+                <p className="text-[10px] font-bold text-red-500 ml-1">Las contraseñas no coinciden</p>
+              )}
             </div>
 
             <button
               type="submit"
-              disabled={loading || !password || !confirmPassword}
-              className="bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-lg transition disabled:opacity-50 mt-2"
+              disabled={loading || !isPasswordValid || password !== confirmPassword}
+              className="bg-red-600 hover:bg-red-700 text-white font-bold py-3.5 rounded-xl transition-all disabled:opacity-50 mt-2 shadow-lg shadow-red-600/20 active:scale-[0.98] flex items-center justify-center gap-2"
             >
-              {loading ? 'Actualizando...' : 'Actualizar contraseña'}
+              {loading ? (
+                'Actualizando...'
+              ) : (
+                <>
+                  Actualizar contraseña
+                  <ShieldCheck size={18} />
+                </>
+              )}
             </button>
           </form>
         ) : (
@@ -123,5 +165,17 @@ export default function ActualizarPasswordPage() {
         )}
       </div>
     </main>
+  )
+}
+
+function RequirementItem({ met, label }: { met: boolean; label: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <div className={`h-1.5 w-1.5 rounded-full transition-colors ${met ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-gray-300'}`} />
+      <span className={`text-[10px] font-bold transition-colors ${met ? 'text-emerald-600' : 'text-gray-400'}`}>
+        {label}
+      </span>
+      {met && <CheckCircle2 size={10} className="text-emerald-500 animate-in zoom-in duration-300" />}
+    </div>
   )
 }

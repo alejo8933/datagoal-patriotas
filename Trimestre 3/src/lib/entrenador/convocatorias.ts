@@ -1,5 +1,6 @@
 "use server";
 import { createClient } from "@/lib/supabase/server";
+import { notificarActividadAdmin } from "./notificaciones";
 
 export async function getPartidosParaConvocatoria() {
   const supabase = await createClient();
@@ -126,4 +127,18 @@ export async function guardarConvocatoriaBulk(partidoId: string, jugadorIds: str
     }));
     await supabase.from("convocatoria_jugadores").insert(payload);
   }
+
+  // Notificar al administrador
+  const { data: partido } = await supabase
+    .from("partidos")
+    .select("equipo_local, equipo_visitante, fecha")
+    .eq("id", partidoId)
+    .single();
+
+  await notificarActividadAdmin({
+    titulo: 'Convocatoria Registrada',
+    descripcion: `Se ha registrado una nueva convocatoria para el partido ${partido?.equipo_local} vs ${partido?.equipo_visitante}. ${jugadorIds.length} jugadores convocados.`,
+    tipo: 'convocatoria'
+  });
 }
+

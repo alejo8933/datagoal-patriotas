@@ -13,29 +13,34 @@ import {
   LogOut,
   LayoutDashboard,
   Wallet,
-  Archive
+  Archive,
+  HeartPulse,
+  LineChart
 } from 'lucide-react'
 import logoutAction from '@/services/actions/logout'
 
 const ADMIN_LINKS = [
   { name: 'Dashboard', href: '/dashboard/admin', icon: LayoutDashboard },
-  { name: 'Usarios y Roles', href: '/dashboard/admin/usuarios', icon: ShieldCheck },
+  { name: 'Usuarios y Roles', href: '/dashboard/admin/usuarios', icon: ShieldCheck },
   { name: 'Equipos', href: '/dashboard/admin/equipos', icon: Shield },
   { name: 'Jugadores', href: '/dashboard/admin/jugadores', icon: Users },
   { name: 'Partidos', href: '/dashboard/admin/partidos', icon: Trophy },
   { name: 'Entrenamientos', href: '/dashboard/admin/entrenamientos', icon: Activity },
+  { name: 'Lesiones', href: '/dashboard/admin/lesiones', icon: HeartPulse },
+  { name: 'Evaluaciones', href: '/dashboard/admin/evaluacion', icon: LineChart },
   { name: 'Finanzas', href: '/dashboard/admin/finanzas', icon: Wallet },
   { name: 'Archivo del Club', href: '/dashboard/admin/archivo', icon: Archive },
 ]
+
 
 export default function AdminSidebar() {
   const pathname = usePathname()
 
   return (
-    <div className="w-64 bg-gray-900 border-r border-gray-800 text-white flex flex-col h-screen fixed top-0 left-0">
+    <div className="w-64 bg-white border-r border-gray-100 text-gray-900 flex flex-col h-screen fixed top-0 left-0 shadow-sm">
       {/* BRANDING */}
-      <div className="h-16 flex items-center px-6 border-b border-gray-800 shrink-0 bg-gray-950">
-        <span className="text-xl font-bold tracking-tight text-white flex items-center gap-2">
+      <div className="h-16 flex items-center px-6 border-b border-gray-100 shrink-0 bg-white">
+        <span className="text-xl font-bold tracking-tight text-gray-900 flex items-center gap-2">
           <div className="w-6 h-6 rounded-full bg-red-600 flex items-center justify-center text-xs">DG</div>
           DataGoal
         </span>
@@ -55,10 +60,10 @@ export default function AdminSidebar() {
             <Link
               key={link.href}
               href={link.href}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-bold transition-all ${
                 isActive 
-                  ? 'bg-red-600 text-white' 
-                  : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                  ? 'bg-red-600 text-white shadow-md shadow-red-500/20 translate-x-1' 
+                  : 'text-gray-500 hover:text-red-600 hover:bg-red-50'
               }`}
             >
               <Icon size={18} />
@@ -69,11 +74,11 @@ export default function AdminSidebar() {
       </div>
 
       {/* FOOTER ACTIONS */}
-      <div className="p-4 border-t border-gray-800">
+      <div className="p-4 border-t border-gray-100 bg-gray-50/50">
         <form action={logoutAction}>
           <button 
             type="submit" 
-            className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-400 hover:text-red-400 hover:bg-gray-800 transition-colors"
+            className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-black text-gray-400 hover:text-red-700 hover:bg-red-50/50 transition-all active:scale-95"
           >
             <LogOut size={18} />
             Cerrar Sesión

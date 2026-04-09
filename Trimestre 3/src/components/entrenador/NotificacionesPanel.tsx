@@ -53,20 +53,20 @@ export default function NotificacionesPanel({
         <div className="flex gap-2">
           <button
             onClick={() => setFiltro("todas")}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition ${
+            className={`px-4 py-1.5 rounded-full text-sm font-bold transition ${
               filtro === "todas"
-                ? "bg-blue-600 text-white"
-                : "bg-white/10 text-gray-300 hover:bg-white/20"
+                ? "bg-red-600 text-white shadow-md shadow-red-200"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
             Todas ({notificaciones.length})
           </button>
           <button
             onClick={() => setFiltro("no_leidas")}
-            className={`px-4 py-1.5 rounded-full text-sm font-medium transition ${
+            className={`px-4 py-1.5 rounded-full text-sm font-bold transition ${
               filtro === "no_leidas"
-                ? "bg-blue-600 text-white"
-                : "bg-white/10 text-gray-300 hover:bg-white/20"
+                ? "bg-red-600 text-white shadow-md shadow-red-200"
+                : "bg-gray-100 text-gray-600 hover:bg-gray-200"
             }`}
           >
             No leídas ({noLeidas})
@@ -77,7 +77,7 @@ export default function NotificacionesPanel({
           <button
             onClick={handleMarcarTodas}
             disabled={isPending}
-            className="text-sm text-blue-400 hover:text-blue-300 transition"
+            className="text-sm font-bold text-red-600 hover:text-red-700 transition"
           >
             Marcar todas como leídas
           </button>

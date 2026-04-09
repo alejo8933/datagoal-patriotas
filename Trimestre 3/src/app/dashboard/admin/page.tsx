@@ -1,12 +1,15 @@
 // src/app/dashboard/admin/page.tsx
 
 import { createClient } from '@/lib/supabase/server'
-import { Users, Shield, Trophy, Activity, TrendingUp, Calendar } from 'lucide-react'
+import { Users, Shield, Trophy, Activity, TrendingUp, Calendar, Bell, MapPin, LineChart as ChartIcon } from 'lucide-react'
+import ActivityFeed from '@/components/admin/ActivityFeed'
+import AnalyticsChart from '@/components/admin/AnalyticsChart'
 
 export default async function AdminDashboardPage() {
   const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
 
-  const [perfilesRes, jugadoresRes, partidosRes, entrenamientosRes, torneosRes, lesionesRes] =
+  const [perfilesRes, jugadoresRes, partidosRes, entrenamientosRes, torneosRes, lesionesRes, notificacionesRes, partidosAnaliticaRes] =
     await Promise.all([
       supabase.from('perfiles').select('*', { count: 'exact', head: true }),
       supabase.from('jugadores').select('*', { count: 'exact', head: true }),
@@ -14,7 +17,25 @@ export default async function AdminDashboardPage() {
       supabase.from('entrenamientos').select('*', { count: 'exact', head: true }),
       supabase.from('torneos').select('*', { count: 'exact', head: true }),
       supabase.from('lesiones').select('*', { count: 'exact', head: true }),
+      supabase.from('notificaciones')
+        .select('*')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false })
+        .limit(10),
+      supabase.from('partidos')
+        .select('id, goles_local, goles_visitante, equipo_local, equipo_visitante')
+        .eq('estado', 'Finalizado')
+        .order('fecha', { ascending: false })
+        .limit(6)
     ])
+
+  // Formatear datos para el gráfico
+  const chartData = (partidosAnaliticaRes.data || []).reverse().map((p, i) => ({
+    name: `P${i + 1}`,
+    favor: p.goles_local || 0,
+    contra: p.goles_visitante || 0,
+  }))
+
 
   // Jugadores activos
   const { count: jugadoresActivos } = await supabase
@@ -88,82 +109,104 @@ export default async function AdminDashboardPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">
+          <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
             Panel Administrativo
           </h1>
-          <p className="text-gray-400 text-sm mt-1">
+          <p className="text-gray-500 text-sm mt-1">
             Resumen general del estado del club
           </p>
         </div>
-        <span className="text-xs font-semibold text-white bg-blue-600 px-3 py-1.5 rounded-full">
+        <span className="text-xs font-bold text-white bg-red-600 px-4 py-2 rounded-full shadow-lg shadow-red-500/20">
           Admin
         </span>
       </div>
 
       {/* Grid de estadísticas */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {stats.map((item, index) => {
           const Icon = item.icon
           return (
             <div
               key={index}
-              className={`bg-white/5 border ${item.border} rounded-xl p-5 hover:bg-white/10 transition`}
+              className={`bg-white border text-gray-900 border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 group`}
             >
               <div className="flex items-center justify-between mb-4">
-                <div className={`p-2.5 rounded-lg ${item.bg}`}>
-                  <Icon className={item.color} size={20} />
+                <div className={`p-3 rounded-xl ${item.bg} group-hover:scale-110 transition-transform duration-300`}>
+                  <Icon className={item.color} size={24} />
                 </div>
               </div>
-              <h3 className="text-3xl font-bold text-white mb-1">
+              <h3 className="text-4xl font-black text-gray-900 mb-1 tracking-tight">
                 {item.value}
                 {'total' in item && (
-                  <span className="text-base font-normal text-gray-500 ml-1">
+                  <span className="text-lg font-medium text-gray-400 ml-1">
                     / {item.total}
                   </span>
                 )}
               </h3>
-              <p className="text-sm text-gray-400">{item.title}</p>
+              <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">{item.title}</p>
             </div>
           )
         })}
       </div>
 
-      {/* Próximos partidos */}
-      <div className="bg-white/5 border border-white/10 rounded-xl p-5">
-        <h2 className="text-base font-semibold text-white mb-4 flex items-center gap-2">
-          <Trophy size={18} className="text-yellow-400" />
-          Próximos partidos
-        </h2>
+      {/* Nueva Sección: Actividad y Analítica */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        {/* Gráfico de Analitica (Nuevo) */}
+        <div className="lg:col-span-2">
+           <AnalyticsChart data={chartData} />
+        </div>
 
-        {!proximosPartidos || proximosPartidos.length === 0 ? (
-          <p className="text-gray-500 text-sm text-center py-6">
-            No hay partidos programados
-          </p>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {proximosPartidos.map((partido, i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between bg-white/5 rounded-lg px-4 py-3"
-              >
-                <div>
-                  <p className="text-white text-sm font-medium">
-                    {partido.equipo_local}{' '}
-                    <span className="text-gray-500">vs</span>{' '}
-                    {partido.equipo_visitante}
-                  </p>
-                  <p className="text-xs text-gray-500 mt-0.5">{partido.lugar}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs text-gray-400">{partido.fecha}</p>
-                  <p className="text-xs text-gray-500">{partido.hora}</p>
-                </div>
+        {/* Actividad de Entrenadores */}
+        <div className="lg:col-span-1">
+          <ActivityFeed notifications={notificacionesRes.data || []} />
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Próximos partidos (Ahora ocupa todo el ancho o se ajusta) */}
+        <div className="lg:col-span-3 bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+          <h2 className="text-lg font-bold text-gray-900 mb-6 flex items-center gap-2">
+            <Trophy size={20} className="text-yellow-500" />
+            Próximos Partidos
+          </h2>
+
+          {!proximosPartidos || proximosPartidos.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mb-4">
+                <Calendar className="text-gray-300" size={24} />
               </div>
-            ))}
-          </div>
-        )}
+              <p className="text-gray-400 text-sm font-medium">
+                No hay partidos programados
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-4">
+              {proximosPartidos.map((partido, i) => (
+                <div
+                  key={i}
+                  className="flex flex-col gap-3 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors border border-transparent hover:border-gray-200"
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-gray-900 text-sm font-bold">
+                      {partido.equipo_local} <span className="text-red-500 mx-1">vs</span> {partido.equipo_visitante}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between text-[11px] font-medium text-gray-500 uppercase tracking-widest">
+                    <span className="flex items-center gap-1"><MapPin size={12} /> {partido.lugar}</span>
+                  </div>
+                  <div className="flex items-center justify-between pt-2 border-t border-gray-200/50">
+                    <span className="text-xs font-bold text-gray-700">{partido.fecha}</span>
+                    <span className="text-xs font-bold text-red-600">{partido.hora}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
 
     </div>
   )
 }
+

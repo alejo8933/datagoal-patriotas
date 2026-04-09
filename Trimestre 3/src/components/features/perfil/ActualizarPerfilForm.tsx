@@ -5,7 +5,7 @@ import { useSearchParams } from 'next/navigation'
 import { 
   User, Mail, Phone, Calendar, Fingerprint, Save, Loader2, 
   CheckCircle2, ShieldCheck, Settings, Activity, Globe, Lock,
-  Sun, Moon, Languages
+  Sun, Moon, Languages, Eye, EyeOff, XCircle
 } from 'lucide-react'
 import { actualizarMiPerfil, cambiarPassword } from '@/services/actions/perfil'
 
@@ -29,6 +29,22 @@ export default function ActualizarPerfilForm({ perfil }: ActualizarPerfilFormPro
   const [loading, setLoading] = useState(false)
   const [pwdLoading, setPwdLoading] = useState(false)
   const [activeTab, setActiveTab] = useState<'general' | 'seguridad' | 'preferencias'>(initialTab)
+  
+  // Estados para contraseña
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false)
+  const [passwordValue, setPasswordValue] = useState('')
+  const [confirmPasswordValue, setConfirmPasswordValue] = useState('')
+  
+  const validationCriteria = {
+    length: passwordValue.length >= 8,
+    hasUpper: /[A-Z]/.test(passwordValue),
+    hasLower: /[a-z]/.test(passwordValue),
+    hasNumber: /[0-9]/.test(passwordValue),
+    passwordsMatch: passwordValue === confirmPasswordValue && passwordValue !== ''
+  }
+
+  const isPasswordValid = Object.values(validationCriteria).every(v => v)
   
   useEffect(() => {
     const tab = searchParams.get('tab')
@@ -60,6 +76,12 @@ export default function ActualizarPerfilForm({ perfil }: ActualizarPerfilFormPro
   const handlePasswordSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     const form = e.currentTarget
+    
+    if (!isPasswordValid) {
+      setPwdMessage({ type: 'error', text: 'La contraseña no cumple con todos los requisitos de seguridad.' })
+      return
+    }
+
     setPwdLoading(true)
     setPwdMessage(null)
 
@@ -237,24 +259,84 @@ export default function ActualizarPerfilForm({ perfil }: ActualizarPerfilFormPro
                       </p>
                     </div>
 
-                    <form onSubmit={handlePasswordSubmit} className="space-y-4 text-left">
+                    <form onSubmit={handlePasswordSubmit} className="space-y-6 text-left">
                       <div className="space-y-2">
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nueva Contraseña</label>
-                        <input required type="password" name="password" placeholder="Min. 6 caracteres" className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-red-500/10 focus:border-red-500 outline-none font-bold" />
+                        <div className="relative group">
+                          <input 
+                            required 
+                            type={showPassword ? "text" : "password"} 
+                            name="password" 
+                            placeholder="Min. 8 caracteres" 
+                            value={passwordValue}
+                            onChange={(e) => setPasswordValue(e.target.value)}
+                            className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-red-500/10 focus:border-red-500 outline-none font-bold transition-all" 
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                          >
+                            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                          </button>
+                        </div>
                       </div>
+
+                      {/* Panel de Requisitos */}
+                      <div className="bg-gray-50 p-4 rounded-2xl border border-gray-100 space-y-3">
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2">Requisitos de Seguridad</p>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                          <RequirementItem met={validationCriteria.length} label="Mínimo 8 caracteres" />
+                          <RequirementItem met={validationCriteria.hasUpper} label="Una mayúscula" />
+                          <RequirementItem met={validationCriteria.hasLower} label="Una minúscula" />
+                          <RequirementItem met={validationCriteria.hasNumber} label="Un número" />
+                        </div>
+                      </div>
+
                       <div className="space-y-2">
                         <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Confirmar Contraseña</label>
-                        <input required type="password" name="confirmPassword" placeholder="Repite tu contraseña" className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-red-500/10 focus:border-red-500 outline-none font-bold" />
+                        <div className="relative group">
+                          <input 
+                            required 
+                            type={showConfirmPassword ? "text" : "password"} 
+                            name="confirmPassword" 
+                            placeholder="Repite tu contraseña" 
+                            value={confirmPasswordValue}
+                            onChange={(e) => setConfirmPasswordValue(e.target.value)}
+                            className="w-full px-5 py-4 bg-gray-50 border border-gray-200 rounded-2xl focus:ring-4 focus:ring-red-500/10 focus:border-red-500 outline-none font-bold transition-all" 
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                            className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                          >
+                            {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                          </button>
+                        </div>
+                        {confirmPasswordValue && !validationCriteria.passwordsMatch && (
+                          <p className="text-[10px] font-bold text-red-500 ml-1">Las contraseñas no coinciden</p>
+                        )}
                       </div>
 
                       {pwdMessage && (
-                        <div className={`p-4 rounded-2xl text-[11px] font-black text-center border ${pwdMessage.type === 'success' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-500 border-red-100'}`}>
+                        <div className={`p-4 rounded-2xl text-[11px] font-black text-center border animate-in fade-in duration-300 ${pwdMessage.type === 'success' ? 'bg-emerald-50 text-emerald-700 border-emerald-100' : 'bg-red-50 text-red-500 border-red-100'}`}>
                           {pwdMessage.text}
                         </div>
                       )}
 
-                      <button type="submit" disabled={pwdLoading} className="w-full py-4 bg-gray-900 hover:bg-black text-white font-black rounded-2xl transition-all shadow-xl disabled:opacity-50">
-                        {pwdLoading ? <Loader2 size={18} className="animate-spin mx-auto" /> : 'Actualizar Credenciales'}
+                      <button 
+                        type="submit" 
+                        disabled={pwdLoading || !isPasswordValid} 
+                        className="w-full py-4 bg-gray-900 hover:bg-black text-white font-black rounded-2xl transition-all shadow-xl disabled:opacity-30 disabled:cursor-not-allowed group active:scale-95"
+                      >
+                        {pwdLoading ? (
+                          <Loader2 size={18} className="animate-spin mx-auto" />
+                        ) : (
+                          <span className="flex items-center justify-center gap-2">
+                            Actualizar Credenciales
+                            <ShieldCheck size={18} className="group-hover:translate-x-1 transition-transform" />
+                          </span>
+                        )}
                       </button>
                     </form>
                   </div>
@@ -317,6 +399,18 @@ export default function ActualizarPerfilForm({ perfil }: ActualizarPerfilFormPro
 
         </main>
       </div>
+    </div>
+  )
+}
+
+function RequirementItem({ met, label }: { met: boolean; label: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <div className={`h-1.5 w-1.5 rounded-full transition-colors ${met ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-gray-300'}`} />
+      <span className={`text-[10px] font-bold transition-colors ${met ? 'text-emerald-600' : 'text-gray-400'}`}>
+        {label}
+      </span>
+      {met && <CheckCircle2 size={10} className="text-emerald-500 animate-in zoom-in duration-300" />}
     </div>
   )
 }

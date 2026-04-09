@@ -1,5 +1,6 @@
 "use server";
 import { createClient } from "@/lib/supabase/server";
+import { notificarActividadAdmin } from "./notificaciones";
 
 export async function getEntrenamientos() {
   const supabase = await createClient();
@@ -81,8 +82,13 @@ export async function guardarAsistenciasBulk(
 ) {
   const supabase = await createClient();
   
-  // Mapeamos a la estructura de la DB. Si 'notas' existe y no hay 'excusa', la ponemos en 'excusa',
-  // o podemos dejarlas si luego se agregan. Por ahora 'excusa' albergaría el texto principal.
+  // Obtener info del entrenamiento para el mensaje
+  const { data: entrenamiento } = await supabase
+    .from("entrenamientos")
+    .select("titulo, fecha")
+    .eq("id", entrenamientoId)
+    .single();
+
   const payload = asistencias.map((a) => ({
     jugador_id: a.jugadorId,
     entrenamiento_id: entrenamientoId,
@@ -91,10 +97,20 @@ export async function guardarAsistenciasBulk(
     hora_llegada: a.horaLlegada ?? null,
   }));
 
-  await supabase
+  const { error } = await supabase
     .from("asistencias")
     .upsert(payload, { onConflict: "jugador_id,entrenamiento_id" });
+
+  if (!error) {
+    const presentCount = asistencias.filter(a => a.presente).length;
+    await notificarActividadAdmin({
+      titulo: 'Asistencia Actualizada',
+      descripcion: `Un entrenador ha actualizado la asistencia para "${entrenamiento?.titulo || 'Entrenamiento'}". Asistieron ${presentCount} jugadores.`,
+      tipo: 'asistencia'
+    });
+  }
 }
+
 
 export async function getReportesAsistencia() {
   const supabase = await createClient();

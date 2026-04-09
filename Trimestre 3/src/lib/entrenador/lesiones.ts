@@ -1,6 +1,7 @@
 "use server";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { notificarActividadAdmin } from "./notificaciones";
 
 export async function getLesiones() {
   const supabase = await createClient();
@@ -55,7 +56,22 @@ export async function registrarLesion(formData: FormData) {
   });
 
   revalidatePath("/dashboard/entrenador/lesiones");
+
+  // Notificar al administrador
+  const { data: jugador } = await supabase
+    .from("jugadores")
+    .select("nombre, apellido")
+    .eq("id", jugador_id)
+    .single();
+
+  await notificarActividadAdmin({
+    titulo: 'Nueva Lesión Registrada',
+    descripcion: `Se ha registrado una nueva lesión para el jugador ${jugador?.nombre} ${jugador?.apellido}. Estado: Activo.`,
+    tipo: 'lesion',
+    prioridad: 'alta'
+  });
 }
+
 
 export async function eliminarLesion(id: string) {
   const supabase = await createClient();

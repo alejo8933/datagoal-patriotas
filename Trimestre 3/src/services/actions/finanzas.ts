@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { notificarActividadAdmin } from '@/lib/entrenador/notificaciones'
 
 export async function registrarPago(formData: FormData) {
   const supabase = await createClient()
@@ -46,6 +47,12 @@ export async function registrarPago(formData: FormData) {
       error: error.message,
     }
   }
+
+  await notificarActividadAdmin({
+    titulo: 'Nuevo Pago Recibido',
+    descripcion: `Se ha registrado un pago de $${montoNum.toLocaleString()} por parte de ${jugador}.`,
+    tipo: 'finanzas'
+  });
 
   revalidatePath('/dashboard/admin/finanzas')
 
@@ -99,6 +106,13 @@ export async function anadirGasto(formData: FormData) {
       error: error.message,
     }
   }
+
+  await notificarActividadAdmin({
+    titulo: 'Gasto Reportado',
+    descripcion: `Se ha registrado un gasto de $${montoNum.toLocaleString()} por concepto de: ${concepto}.`,
+    tipo: 'finanzas',
+    prioridad: 'media'
+  });
 
   revalidatePath('/dashboard/admin/finanzas')
 

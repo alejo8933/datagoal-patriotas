@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
+import { Eye, EyeOff, ShieldCheck, CheckCircle2 } from 'lucide-react'
 
 const POSICIONES = ['Portero', 'Defensa', 'Mediocampista', 'Delantero']
 const CATEGORIAS = ['Sub-7', 'Sub-9', 'Sub-11', 'Sub-13', 'Sub-15', 'Sub-17']
@@ -11,6 +12,8 @@ export default function RegisterForm() {
   const [success, setSuccess] = useState(false)
   const [localError, setLocalError] = useState<string | null>(null)
   const [aceptaTerminos, setAceptaTerminos] = useState(false)
+  const [showPassword, setShowPassword] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
 
   const [form, setForm] = useState({
     rol: 'jugador' as 'jugador' | 'entrenador' | 'admin',
@@ -31,10 +34,20 @@ export default function RegisterForm() {
       setLocalError('Las contraseñas no coinciden.')
       return
     }
-    if (form.password.length < 6) {
-      setLocalError('La contraseña debe tener mínimo 6 caracteres.')
+    
+    // Nueva validación extendida
+    const validation = {
+      length: form.password.length >= 8,
+      upper: /[A-Z]/.test(form.password),
+      lower: /[a-z]/.test(form.password),
+      number: /[0-9]/.test(form.password),
+    }
+
+    if (!Object.values(validation).every(v => v)) {
+      setLocalError('La contraseña no cumple con los requisitos de seguridad.')
       return
     }
+
     if (!aceptaTerminos) {
       setLocalError('Debes aceptar los términos y condiciones.')
       return
@@ -208,22 +221,62 @@ export default function RegisterForm() {
           <h2 className="text-base font-semibold text-gray-900 border-b border-gray-200 pb-1">
             Seguridad
           </h2>
-          <div className="grid grid-cols-2 gap-3">
+          <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium text-gray-700">Contraseña</label>
-              <div className={inputWrapper}>
+              <div className={inputWrapper + " relative group"}>
                 <span className="text-gray-400 text-sm">🔒</span>
-                <input name="password" type="password" placeholder="••••••••" value={form.password}
-                  onChange={handleChange} required className={inputClass} />
+                <input 
+                  name="password" 
+                  type={showPassword ? "text" : "password"} 
+                  placeholder="Min. 8 caracteres" 
+                  value={form.password}
+                  onChange={handleChange} 
+                  required 
+                  className={inputClass} 
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="text-gray-400 hover:text-gray-600 px-2"
+                >
+                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
+              </div>
+              
+              {/* Requisitos visuales */}
+              <div className="grid grid-cols-2 gap-x-4 gap-y-1 mt-1 bg-gray-50 p-2 rounded-lg border border-gray-100">
+                <RequirementItem met={form.password.length >= 8} label="Mín. 8 caracteres" />
+                <RequirementItem met={/[A-Z]/.test(form.password)} label="Mayúscula" />
+                <RequirementItem met={/[a-z]/.test(form.password)} label="Minúscula" />
+                <RequirementItem met={/[0-9]/.test(form.password)} label="Número" />
               </div>
             </div>
+
             <div className="flex flex-col gap-1">
               <label className="text-sm font-medium text-gray-700">Confirmar Contraseña</label>
-              <div className={inputWrapper}>
+              <div className={inputWrapper + " relative group"}>
                 <span className="text-gray-400 text-sm">🔒</span>
-                <input name="confirm" type="password" placeholder="••••••••" value={form.confirm}
-                  onChange={handleChange} required className={inputClass} />
+                <input 
+                  name="confirm" 
+                  type={showConfirm ? "text" : "password"} 
+                  placeholder="••••••••" 
+                  value={form.confirm}
+                  onChange={handleChange} 
+                  required 
+                  className={inputClass} 
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirm(!showConfirm)}
+                  className="text-gray-400 hover:text-gray-600 px-2"
+                >
+                  {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+                </button>
               </div>
+              {form.confirm && form.password !== form.confirm && (
+                <p className="text-[10px] font-bold text-red-500">Las contraseñas no coinciden</p>
+              )}
             </div>
           </div>
 
@@ -242,6 +295,18 @@ export default function RegisterForm() {
         </button>
 
       </form>
+    </div>
+  )
+}
+
+function RequirementItem({ met, label }: { met: boolean; label: string }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      <div className={`h-1 w-1 rounded-full ${met ? 'bg-emerald-500' : 'bg-gray-300'}`} />
+      <span className={`text-[9px] font-bold ${met ? 'text-emerald-600' : 'text-gray-400'}`}>
+        {label}
+      </span>
+      {met && <CheckCircle2 size={8} className="text-emerald-500" />}
     </div>
   )
 }
