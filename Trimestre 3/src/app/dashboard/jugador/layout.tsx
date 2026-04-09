@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { ReactNode } from 'react'
+import HeaderJugador from '@/components/layout/HeaderJugador'
 
 export default async function JugadorLayout({ children }: { children: ReactNode }) {
   const supabase = await createClient()
@@ -24,5 +25,12 @@ export default async function JugadorLayout({ children }: { children: ReactNode 
     redirect(`/dashboard/${perfil.rol}`)
   }
 
-  return <>{children}</>
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <HeaderJugador />
+      <main className="container mx-auto">
+        {children}
+      </main>
+    </div>
+  )
 }
