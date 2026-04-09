@@ -81,11 +81,11 @@ export default function ModalAnadirGasto() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label htmlFor="fecha" className="text-sm font-medium text-gray-700">Fecha del Gasto <span className="text-red-500">*</span></label>
-                    <input required type="date" id="fecha" name="fecha" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition text-gray-700" />
+                    <input required type="date" id="fecha" name="fecha" min="2024-01-01" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition text-gray-700" />
                   </div>
                   <div className="space-y-1.5">
                     <label htmlFor="monto" className="text-sm font-medium text-gray-700">Monto Restado (COP) <span className="text-red-500">*</span></label>
-                    <input required type="number" min="0" step="1000" id="monto" name="monto" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition font-mono text-red-600 font-medium" placeholder="450000" />
+                    <input required type="number" min="1000" step="1000" id="monto" name="monto" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition font-mono text-red-600 font-medium" placeholder="450000" />
                   </div>
                 </div>
               </div>

@@ -39,21 +39,21 @@ export default async function AdminArchivoPage() {
 
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-          <Archive size={22} className="text-gray-400" />
+        <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+          <Archive size={28} className="text-red-600" />
           Archivo del Club
         </h1>
-        <p className="text-gray-400 text-sm mt-1 max-w-2xl">
-          Repositorio de registros inactivos y cancelados. Puedes restaurarlos para volver a la gestión activa.
+        <p className="text-gray-500 text-sm mt-1 max-w-2xl">
+          Repositorio de registros inactivos y cancelados. Puedes restaurarlos para volver a la gestión activa en cualquier momento.
         </p>
       </div>
 
       {totalInactivos === 0 ? (
-        <div className="border-2 border-dashed border-white/10 rounded-2xl p-20 text-center flex flex-col items-center gap-4">
-          <div className="w-14 h-14 bg-white/5 rounded-full flex items-center justify-center">
-            <Archive size={28} className="text-gray-500" />
+        <div className="bg-white border-2 border-dashed border-gray-100 rounded-2xl p-20 text-center flex flex-col items-center gap-4 shadow-sm">
+          <div className="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center">
+            <Archive size={32} className="text-gray-300" />
           </div>
-          <p className="text-gray-500 font-medium">El archivo está vacío actualmente</p>
+          <p className="text-gray-400 font-medium">El archivo está vacío actualmente</p>
         </div>
       ) : (
         <div className="space-y-10">
@@ -62,50 +62,52 @@ export default async function AdminArchivoPage() {
               <div key={section.name} className="flex flex-col gap-4">
 
                 {/* Título de sección */}
-                <div className="flex items-center gap-2">
-                  <section.icon size={18} className="text-gray-400" />
-                  <h2 className="text-base font-semibold text-white">
-                    {section.name} archivados
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500">
+                    <section.icon size={18} />
+                  </div>
+                  <h2 className="text-lg font-bold text-gray-900">
+                    {section.name} Archivados
                   </h2>
-                  <span className="bg-white/10 text-gray-400 px-2 py-0.5 rounded-full text-xs font-mono">
+                  <span className="bg-red-50 text-red-600 px-2.5 py-0.5 rounded-full text-xs font-black border border-red-100">
                     {section.data.length}
                   </span>
                 </div>
 
                 {/* Tabla */}
-                <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+                <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
                   <table className="w-full text-left text-sm">
                     <thead>
-                      <tr className="border-b border-white/10 text-gray-500 uppercase text-[10px] tracking-wider">
-                        <th className="px-5 py-3">Nombre / Referencia</th>
-                        <th className="px-5 py-3">Categoría</th>
-                        <th className="px-5 py-3 text-right">Acción</th>
+                      <tr className="bg-gray-50/50 border-b border-gray-100 text-gray-400 uppercase text-[10px] font-black tracking-widest">
+                        <th className="px-6 py-4">Nombre / Referencia</th>
+                        <th className="px-6 py-4">Categoría</th>
+                        <th className="px-6 py-4 text-right">Acción</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-white/5">
+                    <tbody className="divide-y divide-gray-50">
                       {section.data.map((item: any) => (
-                        <tr key={item.id} className="hover:bg-white/5 transition group">
-                          <td className="px-5 py-3 font-medium text-white">
+                        <tr key={item.id} className="hover:bg-gray-50/50 transition-colors group">
+                          <td className="px-6 py-4 font-bold text-gray-900">
                             {item.nombre ??
                               item.titulo ??
                               (item.equipo_local && item.equipo_visitante
                                 ? `${item.equipo_local} vs ${item.equipo_visitante}`
                                 : item.id)}
                           </td>
-                          <td className="px-5 py-3 text-gray-400">
+                          <td className="px-6 py-4 text-gray-500 font-medium">
                             {item.categoria ?? "—"}
                           </td>
-                          <td className="px-5 py-3 text-right">
+                          <td className="px-6 py-4 text-right">
                             <form action={restaurarRegistro}>
                               <input type="hidden" name="id"    value={item.id} />
                               <input type="hidden" name="tabla" value={section.table} />
                               <input type="hidden" name="path"  value={section.path} />
                               <button
                                 type="submit"
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-green-500/10 text-green-400 border border-green-500/20 rounded-lg hover:bg-green-500/20 transition text-xs font-medium"
+                                className="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-xl hover:bg-emerald-100 hover:shadow-sm transition-all text-xs font-bold"
                               >
-                                <RotateCcw size={13} />
-                                Restaurar
+                                <RotateCcw size={14} />
+                                Restaurar Registro
                               </button>
                             </form>
                           </td>

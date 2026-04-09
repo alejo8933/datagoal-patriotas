@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { ShieldCheck, ShieldAlert, Users, UserCheck, UserX, Shield, Activity, GraduationCap } from 'lucide-react'
 import ModalCrearUsuario from '@/components/features/usuarios/ModalCrearUsuario'
 import TablaUsuarios from '@/components/features/usuarios/TablaUsuarios'
+import BtnSincronizar from '@/components/features/usuarios/BtnSincronizar'
 
 export default async function AdminUsuariosPage() {
   const supabase = await createClient()
@@ -29,14 +30,17 @@ export default async function AdminUsuariosPage() {
     <div className="flex flex-col gap-10 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-20">
       
       {/* HEADER SECTION */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+        <div className="flex-1">
           <h1 className="text-4xl font-extrabold text-gray-900 tracking-tight flex items-center gap-2">
             Gestión de Usuarios
           </h1>
           <p className="text-gray-500 font-medium mt-1">Administra usuarios, roles y permisos de acceso al sistema DataGoal.</p>
         </div>
-        <ModalCrearUsuario />
+        <div className="flex items-center gap-4">
+          <BtnSincronizar />
+          <ModalCrearUsuario />
+        </div>
       </div>
 
       {/* KPI CARDS */}

@@ -18,6 +18,8 @@ export const authService = {
 
   async register(fields: Register) {
     const supabase = createClient()
+    
+    // 1. Crear el usuario en el sistema de Autenticación
     const { data, error } = await supabase.auth.signUp({
       email:    fields.email,
       password: fields.password,
@@ -33,7 +35,32 @@ export const authService = {
         },
       },
     })
-    if (error) throw new Error('Error al registrar. Intenta con otro correo.')
+    
+    if (error) throw new Error('Error al registrar: ' + error.message)
+    if (!data.user) throw new Error('No se pudo crear el usuario.')
+
+    // 2. Sincronización Inmediata con la tabla 'perfiles'
+    // Esto asegura que el nombre y correo aparezcan en la tabla del admin.
+    const { error: profileError } = await supabase
+      .from('perfiles')
+      .upsert({
+        id:               data.user.id,
+        email:            fields.email,
+        nombre:           fields.nombre,
+        apellido:         fields.apellido,
+        rol:              fields.rol,
+        telefono:         fields.telefono,
+        fecha_nacimiento: fields.fechaNacimiento,
+        posicion:         fields.posicion,
+        categoria:        fields.categoria,
+        activo:           true
+      })
+
+    if (profileError) {
+      console.error('Error sincronizando perfil:', profileError)
+      // No lanzamos error aquí para no bloquear el registro, ya que la cuenta ya se creó.
+    }
+
     return data
   },
 

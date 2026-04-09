@@ -126,14 +126,28 @@ export default function ModalCrearUsuario() {
                       <label className={labelClass}>Nombre(s) *</label>
                       <div className="relative text-gray-400 focus-within:text-red-600">
                         <User className="absolute left-3.5 top-1/2 -translate-y-1/2" size={18} />
-                        <input required name="nombre" className={inputClass} placeholder="Juan" />
+                        <input 
+                          required 
+                          name="nombre" 
+                          className={inputClass} 
+                          placeholder="Juan" 
+                          pattern="[A-Za-zÀ-ÿ\s]+" 
+                          title="Solo se permiten letras"
+                        />
                       </div>
                     </div>
                     <div className="space-y-2">
                       <label className={labelClass}>Apellido(s) *</label>
                       <div className="relative text-gray-400 focus-within:text-red-600">
                         <User className="absolute left-3.5 top-1/2 -translate-y-1/2" size={18} />
-                        <input required name="apellido" className={inputClass} placeholder="Pérez" />
+                        <input 
+                          required 
+                          name="apellido" 
+                          className={inputClass} 
+                          placeholder="Pérez" 
+                          pattern="[A-Za-zÀ-ÿ\s]+" 
+                          title="Solo se permiten letras"
+                        />
                       </div>
                     </div>
                   </div>
@@ -143,7 +157,16 @@ export default function ModalCrearUsuario() {
                       <label className={labelClass}>Teléfono de Contacto</label>
                       <div className="relative">
                         <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                        <input name="telefono" className={inputClass} placeholder="+57 300..." />
+                        <input 
+                          name="telefono" 
+                          className={inputClass} 
+                          placeholder="3001234567" 
+                          type="tel"
+                          pattern="\d+"
+                          minLength={7}
+                          maxLength={15}
+                          title="Solo números (7 a 15 dígitos)"
+                        />
                       </div>
                     </div>
                     <div className="space-y-2">
@@ -206,9 +229,9 @@ export default function ModalCrearUsuario() {
                         required 
                         type="password" 
                         name="password" 
-                        minLength={6} 
+                        minLength={8} 
                         className={inputClass} 
-                        placeholder="Contraseña inicial para el usuario" 
+                        placeholder="Mínimo 8 caracteres" 
                       />
                     </div>
                   </div>

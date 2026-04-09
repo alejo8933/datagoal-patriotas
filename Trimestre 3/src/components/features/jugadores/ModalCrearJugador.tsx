@@ -67,11 +67,11 @@ export default function ModalCrearJugador() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label htmlFor="nombre" className="text-sm font-medium text-gray-700">Nombre <span className="text-red-500">*</span></label>
-                    <input required type="text" id="nombre" name="nombre" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition" placeholder="Ej: Falcao" />
+                    <input required type="text" id="nombre" name="nombre" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition" placeholder="Ej: Falcao" pattern="[A-Za-zÀ-ÿ\s]+" title="Solo se permiten letras" />
                   </div>
                   <div className="space-y-1.5">
                     <label htmlFor="apellido" className="text-sm font-medium text-gray-700">Apellido <span className="text-red-500">*</span></label>
-                    <input required type="text" id="apellido" name="apellido" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition" placeholder="Ej: García" />
+                    <input required type="text" id="apellido" name="apellido" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition" placeholder="Ej: García" pattern="[A-Za-zÀ-ÿ\s]+" title="Solo se permiten letras" />
                   </div>
                 </div>
 

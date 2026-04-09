@@ -68,11 +68,11 @@ export default function ModalRegistrarPago() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label htmlFor="fecha" className="text-sm font-medium text-gray-700">Mes Pagado (Fecha) <span className="text-red-500">*</span></label>
-                    <input required type="date" id="fecha" name="fecha" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition text-gray-700" />
+                    <input required type="date" id="fecha" name="fecha" min="2024-01-01" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition text-gray-700" />
                   </div>
                   <div className="space-y-1.5">
                     <label htmlFor="monto" className="text-sm font-medium text-gray-700">Monto Cobrado (COP) <span className="text-red-500">*</span></label>
-                    <input required type="number" min="0" step="1000" id="monto" name="monto" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition font-mono text-green-700 font-medium bg-green-50/30" placeholder="150000" />
+                    <input required type="number" min="1000" step="1000" id="monto" name="monto" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 transition font-mono text-green-700 font-medium bg-green-50/30" placeholder="150000" />
                   </div>
                 </div>
               </div>

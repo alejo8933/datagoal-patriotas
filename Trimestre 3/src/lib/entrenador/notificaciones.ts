@@ -58,3 +58,36 @@ export async function crearNotificacion({
     user_id, titulo, descripcion, tipo, prioridad,
   });
 }
+
+export async function notificarActividadAdmin({
+  titulo,
+  descripcion,
+  tipo = "coach_activity",
+  prioridad = "media",
+}: {
+  titulo: string;
+  descripcion?: string;
+  tipo?: string;
+  prioridad?: string;
+}) {
+  const supabase = await createClient();
+  
+  // 1. Obtener todos los administradores
+  const { data: admins } = await supabase
+    .from("perfiles")
+    .select("id")
+    .eq("rol", "admin");
+
+  if (!admins || admins.length === 0) return;
+
+  // 2. Crear las notificaciones en lote
+  const notificationsToInsert = admins.map(admin => ({
+    user_id: admin.id,
+    titulo,
+    descripcion,
+    tipo,
+    prioridad,
+  }));
+
+  await supabase.from("notificaciones").insert(notificationsToInsert);
+}

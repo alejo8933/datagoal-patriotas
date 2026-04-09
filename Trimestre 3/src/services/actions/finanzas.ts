@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { notificarActividadAdmin } from '@/lib/entrenador/notificaciones'
 
 export async function registrarPago(formData: FormData) {
   const supabase = await createClient()
@@ -14,6 +15,14 @@ export async function registrarPago(formData: FormData) {
     return {
       success: false,
       message: 'Todos los campos son obligatorios para asentar un pago.',
+    }
+  }
+
+  const montoNum = parseFloat(monto)
+  if (isNaN(montoNum) || montoNum <= 0) {
+    return {
+      success: false,
+      message: 'El monto debe ser un valor numérico superior a cero.',
     }
   }
 
@@ -39,6 +48,12 @@ export async function registrarPago(formData: FormData) {
     }
   }
 
+  await notificarActividadAdmin({
+    titulo: 'Nuevo Pago Recibido',
+    descripcion: `Se ha registrado un pago de $${montoNum.toLocaleString()} por parte de ${jugador}.`,
+    tipo: 'finanzas'
+  });
+
   revalidatePath('/dashboard/admin/finanzas')
 
   return {
@@ -59,6 +74,14 @@ export async function anadirGasto(formData: FormData) {
     return {
       success: false,
       message: 'El Concepto, el Monto y la Fecha son obligatorios.',
+    }
+  }
+
+  const montoNum = parseFloat(monto)
+  if (isNaN(montoNum) || montoNum <= 0) {
+    return {
+      success: false,
+      message: 'El monto del gasto debe ser un valor numérico superior a cero.',
     }
   }
 
@@ -83,6 +106,13 @@ export async function anadirGasto(formData: FormData) {
       error: error.message,
     }
   }
+
+  await notificarActividadAdmin({
+    titulo: 'Gasto Reportado',
+    descripcion: `Se ha registrado un gasto de $${montoNum.toLocaleString()} por concepto de: ${concepto}.`,
+    tipo: 'finanzas',
+    prioridad: 'media'
+  });
 
   revalidatePath('/dashboard/admin/finanzas')
 

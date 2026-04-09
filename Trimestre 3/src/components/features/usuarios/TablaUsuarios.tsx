@@ -12,6 +12,10 @@ interface Usuario {
   email: string | null
   rol: string
   activo: boolean
+  telefono?: string | null
+  fecha_nacimiento?: string | null
+  posicion?: string | null
+  categoria?: string | null
   last_login?: string
 }
 
@@ -70,11 +74,15 @@ export default function TablaUsuarios({ usuarios }: TablaUsuariosProps) {
                         <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold text-sm ${
                           u.activo ? 'bg-red-50 text-red-600' : 'bg-gray-50 text-gray-400'
                         }`}>
-                          {u.nombre?.[0] || 'U'}
+                          {u.nombre ? u.nombre[0].toUpperCase() : 'U'}
                         </div>
                         <div>
-                          <p className="font-bold text-gray-900 text-sm leading-none mb-1">{u.nombre || 'Sin Nombre'} {u.apellido || ''}</p>
-                          <p className="text-xs text-gray-400 font-medium">{u.email || (u.nombre?.toLowerCase().replace(' ', '.') + '@datagoal.com')}</p>
+                          <p className="font-bold text-gray-900 text-sm leading-none mb-1">
+                            {u.nombre ? `${u.nombre} ${u.apellido || ''}` : 'Usuario sin Registro'}
+                          </p>
+                          <p className="text-xs text-gray-400 font-medium">
+                            {u.email || (u.nombre ? `${u.nombre.toLowerCase().split(' ')[0]}@datagoal.com` : 'Correo no disponible')}
+                          </p>
                         </div>
                       </div>
                     </td>
