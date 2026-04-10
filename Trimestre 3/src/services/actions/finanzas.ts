@@ -121,3 +121,59 @@ export async function anadirGasto(formData: FormData) {
     message: 'Gasto reportado y restado del balance exitosamente.',
   }
 }
+
+export async function actualizarPago(id: string, formData: FormData) {
+  const supabase = await createClient()
+
+  const jugador = formData.get('jugador')?.toString().trim()
+  const monto = formData.get('monto')?.toString().trim()
+  const fecha = formData.get('fecha')?.toString().trim()
+  const estado = formData.get('estado')?.toString().trim()
+
+  if (!jugador || !monto || !fecha) {
+    return { success: false, message: 'Faltan campos obligatorios.' }
+  }
+
+  const { error } = await supabase
+    .from('facturas')
+    .update({
+      jugador,
+      monto: parseFloat(monto),
+      fecha,
+      estado: estado || 'Pagado'
+    })
+    .eq('id', id)
+
+  if (error) return { success: false, message: error.message }
+  
+  revalidatePath('/dashboard/admin/finanzas')
+  return { success: true, message: 'Pago actualizado.' }
+}
+
+export async function actualizarGasto(id: string, formData: FormData) {
+  const supabase = await createClient()
+
+  const concepto = formData.get('concepto')?.toString().trim()
+  const categoria = formData.get('categoria')?.toString().trim()
+  const monto = formData.get('monto')?.toString().trim()
+  const fecha = formData.get('fecha')?.toString().trim()
+
+  if (!concepto || !monto || !fecha) {
+    return { success: false, message: 'Faltan campos obligatorios.' }
+  }
+
+  const { error } = await supabase
+    .from('gastos')
+    .update({
+      concepto,
+      categoria: categoria || 'General',
+      monto: parseFloat(monto),
+      fecha
+    })
+    .eq('id', id)
+
+  if (error) return { success: false, message: error.message }
+
+  revalidatePath('/dashboard/admin/finanzas')
+  return { success: true, message: 'Gasto actualizado.' }
+}

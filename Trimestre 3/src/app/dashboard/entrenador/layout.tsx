@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import HeaderEntrenador from '@/components/layout/HeaderEntrenador'
+import FooterEntrenador from '@/components/layout/FooterEntrenador'
 
 export default async function EntrenadorLayout({
   children,
@@ -24,10 +25,11 @@ export default async function EntrenadorLayout({
   return (
     <>
       <HeaderEntrenador />
-      <main className="min-h-screen bg-gray-50">
-        <div className="mx-auto max-w-7xl px-6 py-8">
+      <main className="min-h-screen bg-gray-50 flex flex-col justify-between">
+        <div className="mx-auto w-full max-w-7xl flex-grow px-6 py-8">
           {children}
         </div>
+        <FooterEntrenador />
       </main>
     </>
   )

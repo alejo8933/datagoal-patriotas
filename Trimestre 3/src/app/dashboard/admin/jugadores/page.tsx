@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { Users, ShieldAlert, Image as ImageIcon, FileDown } from 'lucide-react'
+import Link from 'next/link'
 import ModalCrearJugador from '@/components/features/jugadores/ModalCrearJugador'
 import ModalEliminar from '@/components/features/ui/ModalEliminar'
 import ModalEditarJugador from '@/components/features/jugadores/ModalEditarJugador'
@@ -94,9 +95,12 @@ export default async function AdminJugadoresPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className="px-3 py-1 rounded-lg text-[10px] font-black uppercase bg-red-50/50 text-red-600 border border-red-100/50 tracking-tight">
+                      <Link 
+                        href={`/dashboard/admin/equipos?search=${jugador.categoria}`}
+                        className="px-3 py-1 rounded-lg text-[10px] font-black uppercase bg-red-50/50 text-red-600 border border-red-100/50 tracking-tight hover:bg-red-600 hover:text-white transition-all"
+                      >
                         {jugador.categoria || 'Sin Cat.'}
-                      </span>
+                      </Link>
                     </td>
                     <td className="px-6 py-4 text-center text-gray-500 font-bold text-xs">{jugador.posicion || '--'}</td>
                     <td className="px-6 py-4 text-center">

@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { useAuth } from '@/hooks/useAuth'
-import { Eye, EyeOff, ShieldCheck, CheckCircle2 } from 'lucide-react'
+import { Eye, EyeOff, ShieldCheck, CheckCircle2, Lock } from 'lucide-react'
+import { validarCodigoRegistro } from '@/services/actions/auth'
 
 const POSICIONES = ['Portero', 'Defensa', 'Mediocampista', 'Delantero']
 const CATEGORIAS = ['Sub-7', 'Sub-9', 'Sub-11', 'Sub-13', 'Sub-15', 'Sub-17']
@@ -20,6 +21,7 @@ export default function RegisterForm() {
     nombre: '', apellido: '', email: '', telefono: '',
     fechaNacimiento: '', posicion: '', categoria: '',
     password: '', confirm: '',
+    codigoAcceso: '',
   })
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -51,6 +53,15 @@ export default function RegisterForm() {
     if (!aceptaTerminos) {
       setLocalError('Debes aceptar los términos y condiciones.')
       return
+    }
+
+    // Validación del Código de Acceso para Entrenador/Admin
+    if (form.rol !== 'jugador') {
+      const res = await validarCodigoRegistro(form.rol, form.codigoAcceso)
+      if (!res.success) {
+        setLocalError(res.message || 'Código de acceso inválido.')
+        return
+      }
     }
 
     const ok = await register({
@@ -132,6 +143,29 @@ export default function RegisterForm() {
             </label>
           </div>
         </div>
+
+        {/* ── Código de Acceso (Solo para Admin/Entrenador) ── */}
+        {form.rol !== 'jugador' && (
+          <div className="flex flex-col gap-1 animate-in fade-in slide-in-from-top-1 duration-300">
+            <label className="text-sm font-medium text-red-700 flex items-center gap-1">
+              <Lock size={14} /> Código de Acceso Requerido
+            </label>
+            <div className={inputWrapper + " border-red-300 bg-red-50/30"}>
+              <span className="text-red-400 text-sm">🔑</span>
+              <input 
+                name="codigoAcceso" 
+                placeholder={`Código secreto de ${form.rol}`}
+                value={form.codigoAcceso}
+                onChange={handleChange} 
+                required 
+                className={inputClass} 
+              />
+            </div>
+            <p className="text-[10px] text-gray-500">
+              Solicita este código a la coordinación para registrarte como {form.rol}.
+            </p>
+          </div>
+        )}
 
         {/* ── Información Personal ── */}
         <div className="flex flex-col gap-3">

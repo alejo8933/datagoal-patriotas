@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { Users, Shield, Trophy, Activity, TrendingUp, Calendar, Bell, MapPin, LineChart as ChartIcon } from 'lucide-react'
+import Link from 'next/link'
 import ActivityFeed from '@/components/admin/ActivityFeed'
 import AnalyticsChart from '@/components/admin/AnalyticsChart'
 
@@ -59,6 +60,7 @@ export default async function AdminDashboardPage() {
       color: 'text-blue-400',
       bg: 'bg-blue-500/10',
       border: 'border-blue-500/20',
+      href: '/dashboard/admin/usuarios'
     },
     {
       title: 'Jugadores Activos',
@@ -68,6 +70,7 @@ export default async function AdminDashboardPage() {
       color: 'text-green-400',
       bg: 'bg-green-500/10',
       border: 'border-green-500/20',
+      href: '/dashboard/admin/jugadores'
     },
     {
       title: 'Partidos Registrados',
@@ -76,6 +79,7 @@ export default async function AdminDashboardPage() {
       color: 'text-yellow-400',
       bg: 'bg-yellow-500/10',
       border: 'border-yellow-500/20',
+      href: '/dashboard/admin/partidos'
     },
     {
       title: 'Entrenamientos',
@@ -84,6 +88,7 @@ export default async function AdminDashboardPage() {
       color: 'text-purple-400',
       bg: 'bg-purple-500/10',
       border: 'border-purple-500/20',
+      href: '/dashboard/admin/entrenamientos'
     },
     {
       title: 'Torneos',
@@ -92,6 +97,7 @@ export default async function AdminDashboardPage() {
       color: 'text-orange-400',
       bg: 'bg-orange-500/10',
       border: 'border-orange-500/20',
+      href: '/dashboard/admin/archivo'
     },
     {
       title: 'Lesiones Activas',
@@ -100,6 +106,7 @@ export default async function AdminDashboardPage() {
       color: 'text-red-400',
       bg: 'bg-red-500/10',
       border: 'border-red-500/20',
+      href: '/dashboard/admin/lesiones'
     },
   ]
 
@@ -126,13 +133,17 @@ export default async function AdminDashboardPage() {
         {stats.map((item, index) => {
           const Icon = item.icon
           return (
-            <div
+            <Link
               key={index}
-              className={`bg-white border text-gray-900 border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-md transition-all duration-300 group`}
+              href={item.href}
+              className={`bg-white border text-gray-900 border-gray-100 rounded-2xl p-6 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 group cursor-pointer`}
             >
               <div className="flex items-center justify-between mb-4">
                 <div className={`p-3 rounded-xl ${item.bg} group-hover:scale-110 transition-transform duration-300`}>
                   <Icon className={item.color} size={24} />
+                </div>
+                <div className="text-[10px] font-bold text-gray-400 uppercase tracking-widest opacity-0 group-hover:opacity-100 transition-opacity">
+                  Gestionar →
                 </div>
               </div>
               <h3 className="text-4xl font-black text-gray-900 mb-1 tracking-tight">
@@ -144,7 +155,7 @@ export default async function AdminDashboardPage() {
                 )}
               </h3>
               <p className="text-sm font-semibold text-gray-500 uppercase tracking-wider">{item.title}</p>
-            </div>
+            </Link>
           )
         })}
       </div>

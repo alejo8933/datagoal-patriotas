@@ -5,9 +5,10 @@ import { useSearchParams } from 'next/navigation'
 import { 
   User, Mail, Phone, Calendar, Fingerprint, Save, Loader2, 
   CheckCircle2, ShieldCheck, Settings, Activity, Globe, Lock,
-  Sun, Moon, Languages, Eye, EyeOff, XCircle
+  Sun, Moon, Languages, Eye, EyeOff, XCircle, LogOut
 } from 'lucide-react'
 import { actualizarMiPerfil, cambiarPassword } from '@/services/actions/perfil'
+import logoutAction from '@/services/actions/logout'
 
 interface ActualizarPerfilFormProps {
   perfil: {
@@ -392,6 +393,23 @@ export default function ActualizarPerfilForm({ perfil }: ActualizarPerfilFormPro
                     <button type="button" className="px-8 py-3 bg-gray-900 hover:bg-black text-white font-black rounded-2xl transition-all shadow-lg active:scale-95 flex items-center gap-2">
                       <Save size={18} /> Guardar Preferencias
                     </button>
+                  </div>
+
+                  {/* SECCIÓN: CIERRE DE SESIÓN */}
+                  <div className="pt-8 border-t border-gray-100 flex flex-col md:flex-row items-center justify-between gap-6">
+                    <div className="space-y-1">
+                      <h3 className="text-sm font-black text-gray-900 uppercase tracking-widest">Gestión de Cuenta</h3>
+                      <p className="text-xs text-gray-400 font-medium">Finaliza tu sesión actual en este dispositivo.</p>
+                    </div>
+                    <form action={logoutAction}>
+                      <button 
+                        type="submit"
+                        className="flex items-center gap-3 px-8 py-3.5 rounded-2xl text-sm font-black text-red-600 bg-red-50 hover:bg-red-600 hover:text-white transition-all shadow-sm active:scale-95 border border-red-100/50"
+                      >
+                        <LogOut size={18} />
+                        Cerrar Sesión Activa
+                      </button>
+                    </form>
                   </div>
                 </div>
              </div>

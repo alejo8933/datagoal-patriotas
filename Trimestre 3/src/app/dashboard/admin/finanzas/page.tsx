@@ -2,6 +2,9 @@ import { createClient } from '@/lib/supabase/server'
 import { Wallet, TrendingUp, TrendingDown, DollarSign, Receipt, Archive } from 'lucide-react'
 import ModalRegistrarPago from '@/components/features/finanzas/ModalRegistrarPago'
 import ModalAnadirGasto from '@/components/features/finanzas/ModalAnadirGasto'
+import ModalEditarFactura from '@/components/features/finanzas/ModalEditarFactura'
+import ModalEditarGasto from '@/components/features/finanzas/ModalEditarGasto'
+import ModalEliminar from '@/components/features/ui/ModalEliminar'
 import ExportarReporte from '@/components/admin/ExportarReporte'
 
 export default async function AdminFinanzasPage() {
@@ -113,11 +116,12 @@ export default async function AdminFinanzasPage() {
                   <th className="px-6 py-4">Fecha</th>
                   <th className="px-6 py-4 text-right">Monto</th>
                   <th className="px-6 py-4 text-center">Estado</th>
+                  <th className="px-6 py-4 text-right">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 font-medium">
                 {facturas.map((fac) => (
-                  <tr key={fac.id} className="hover:bg-gray-50/50 transition-colors">
+                  <tr key={fac.id} className="hover:bg-gray-50/50 transition-colors group">
                     <td className="px-6 py-4 font-bold text-gray-900">{fac.jugador}</td>
                     <td className="px-6 py-4 text-gray-500">{fac.fecha}</td>
                     <td className="px-6 py-4 text-right font-mono text-gray-900">${fac.monto.toLocaleString()}</td>
@@ -129,6 +133,18 @@ export default async function AdminFinanzasPage() {
                       }`}>
                         {fac.estado}
                       </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                       <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                         <ModalEditarFactura factura={fac} />
+                         <ModalEliminar 
+                            tabla="facturas" 
+                            idRegistro={fac.id} 
+                            pathRevalidacion="/dashboard/admin/finanzas"
+                            modo="hard"
+                            esIcono={true}
+                         />
+                       </div>
                     </td>
                   </tr>
                 ))}
@@ -154,20 +170,33 @@ export default async function AdminFinanzasPage() {
               <thead className="bg-gray-50/50 text-gray-400 uppercase text-[10px] font-black tracking-widest border-b border-gray-100">
                 <tr>
                   <th className="px-6 py-4">Concepto</th>
-                  <th className="px-6 py-4">Categoría</th>
+                  <th className="px-6 py-4 text-center">Categoría</th>
                   <th className="px-6 py-4 text-right">Monto</th>
+                  <th className="px-6 py-4 text-right">Acciones</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-50 font-medium">
                 {gastos.map((gasto) => (
-                  <tr key={gasto.id} className="hover:bg-gray-50/50 transition-colors">
+                  <tr key={gasto.id} className="hover:bg-gray-50/50 transition-colors group">
                     <td className="px-6 py-4 font-bold text-gray-900 truncate max-w-[150px]">{gasto.concepto}</td>
-                    <td className="px-6 py-4">
-                      <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded text-[10px] font-black uppercase">
+                    <td className="px-6 py-4 text-center">
+                      <span className="bg-gray-100 text-gray-500 px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest whitespace-nowrap">
                         {gasto.categoria}
                       </span>
                     </td>
                     <td className="px-6 py-4 text-right font-mono text-red-600 font-bold">-${gasto.monto.toLocaleString()}</td>
+                    <td className="px-6 py-4 text-right">
+                       <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                         <ModalEditarGasto gasto={gasto} />
+                         <ModalEliminar 
+                            tabla="gastos" 
+                            idRegistro={gasto.id} 
+                            pathRevalidacion="/dashboard/admin/finanzas"
+                            modo="hard"
+                            esIcono={true}
+                         />
+                       </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>

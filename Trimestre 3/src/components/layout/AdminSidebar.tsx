@@ -73,18 +73,6 @@ export default function AdminSidebar() {
         })}
       </div>
 
-      {/* FOOTER ACTIONS */}
-      <div className="p-4 border-t border-gray-100 bg-gray-50/50">
-        <form action={logoutAction}>
-          <button 
-            type="submit" 
-            className="flex w-full items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-black text-gray-400 hover:text-red-700 hover:bg-red-50/50 transition-all active:scale-95"
-          >
-            <LogOut size={18} />
-            Cerrar Sesión
-          </button>
-        </form>
-      </div>
     </div>
   )
 }
