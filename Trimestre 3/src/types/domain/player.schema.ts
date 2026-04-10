@@ -11,6 +11,7 @@ export const PlayerSchema = z.object({
   asistencias:        z.number().int().min(0).default(0),
   tarjetas_amarillas: z.number().int().min(0).default(0),
   tarjetas_rojas:     z.number().int().min(0).default(0),
+  foto_url:           z.string().url().nullable().optional(),
 })
 
 export const CreatePlayerSchema = PlayerSchema.omit({ id: true })
