@@ -36,7 +36,12 @@ export const authService = {
       },
     })
     
-    if (error) throw new Error('Error al registrar: ' + error.message)
+    if (error) {
+      if (error.message.includes('User already registered')) {
+        throw new Error('Este correo electrónico ya está registrado. Si es tu cuenta, intenta iniciar sesión.')
+      }
+      throw new Error('Error al registrar: ' + error.message)
+    }
     if (!data.user) throw new Error('No se pudo crear el usuario.')
 
     // 2. Sincronización Inmediata con la tabla 'perfiles'

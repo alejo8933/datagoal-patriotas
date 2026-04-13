@@ -118,8 +118,19 @@ export default function RegisterForm() {
       <form onSubmit={handleSubmit} className="w-full flex flex-col gap-6">
 
         {displayError && (
-          <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-2 rounded-lg">
-            {displayError}
+          <div className="bg-red-50 border border-red-200 text-red-700 text-sm px-4 py-3 rounded-xl flex flex-col gap-2 animate-in shake duration-300">
+            <p className="font-medium flex items-center gap-2">
+              <ShieldCheck size={16} className="text-red-500" />
+              {displayError}
+            </p>
+            {displayError.includes('registrado') && (
+              <a 
+                href="/login" 
+                className="w-full text-center bg-white border border-red-200 py-1.5 rounded-lg text-xs font-bold hover:bg-red-50 transition-colors mt-1"
+              >
+                Ir a Iniciar Sesión →
+              </a>
+            )}
           </div>
         )}
 

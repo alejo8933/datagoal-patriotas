@@ -5,8 +5,6 @@ import { Users, Shield, Trophy, Activity, TrendingUp, Calendar, Bell, MapPin, Li
 import Link from 'next/link'
 import ActivityFeed from '@/components/admin/ActivityFeed'
 import AnalyticsChart from '@/components/admin/AnalyticsChart'
-import KPIStats from '@/components/admin/okr/KPIStats'
-import OKRList from '@/components/admin/okr/OKRList'
 
 export default async function AdminDashboardPage() {
   const supabase = await createClient()
@@ -50,7 +48,7 @@ export default async function AdminDashboardPage() {
   const { data: proximosPartidos } = await supabase
     .from('partidos')
     .select('equipo_local, equipo_visitante, fecha, hora, lugar')
-    .eq('estado', 'programado')
+    .eq('estado', 'Programado')
     .order('fecha', { ascending: true })
     .limit(3)
 
@@ -130,11 +128,6 @@ export default async function AdminDashboardPage() {
         </span>
       </div>
 
-      {/* SECCIÓN ESTRATÉGICA: KPIs y OKRs (NUEVO) */}
-      <div className="space-y-4">
-        <KPIStats />
-        <OKRList />
-      </div>
 
       <div className="h-px w-full bg-slate-100 dark:bg-slate-800" />
 
