@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { Activity, ShieldAlert, Calendar, Clock, MapPin, Tag } from 'lucide-react'
+import Link from 'next/link'
 import ModalCrearEntrenamiento from '@/components/features/entrenamientos/ModalCrearEntrenamiento'
 import ModalEliminar from '@/components/features/ui/ModalEliminar'
 import ModalEditarEntrenamiento from '@/components/features/entrenamientos/ModalEditarEntrenamiento'
@@ -96,9 +97,12 @@ export default async function AdminEntrenamientosPage() {
                   <button className="py-2 text-center text-sm font-medium border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition">
                     Editar
                   </button>
-                  <button className="py-2 text-center text-sm font-medium bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition">
+                  <Link 
+                    href={`/dashboard/admin/entrenamientos/${sesion.id}/asistencia`}
+                    className="py-2 text-center text-sm font-medium bg-red-50 text-red-700 rounded-lg hover:bg-red-100 transition"
+                  >
                     Ver Asistencia
-                  </button>
+                  </Link>
                 </div>
               </div>
             </div>

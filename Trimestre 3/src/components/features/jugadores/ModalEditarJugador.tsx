@@ -12,6 +12,7 @@ interface ModalEditarJugadorProps {
     categoria: string | null
     posicion: string | null
     numero_camiseta: number | null
+    goles: number | null
   }
 }
 
@@ -136,6 +137,17 @@ export default function ModalEditarJugador({ jugador }: ModalEditarJugadorProps)
                       name="numero_camiseta" 
                       defaultValue={jugador.numero_camiseta || ''} 
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition" 
+                    />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label htmlFor="goles" className="text-sm font-medium text-gray-700">Goles Totales</label>
+                    <input 
+                      type="number" 
+                      min="0" 
+                      id="goles" 
+                      name="goles" 
+                      defaultValue={jugador.goles || 0} 
+                      className="w-full px-3 py-2 border border-blue-200 bg-blue-50/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition font-bold text-blue-700" 
                     />
                   </div>
                 </div>

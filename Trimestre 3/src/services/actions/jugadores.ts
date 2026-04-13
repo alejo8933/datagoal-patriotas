@@ -92,6 +92,7 @@ export async function editarJugador(formData: FormData) {
   const posicion = formData.get('posicion')?.toString().trim()
   const categoria = formData.get('categoria')?.toString().trim()
   const numero_camiseta_raw = formData.get('numero_camiseta')
+  const goles_raw = formData.get('goles')
 
   if (!id || !nombre || !apellido || !categoria) {
     return {
@@ -101,6 +102,7 @@ export async function editarJugador(formData: FormData) {
   }
 
   const numero_camiseta = numero_camiseta_raw ? parseInt(numero_camiseta_raw.toString(), 10) : null
+  const goles = goles_raw ? parseInt(goles_raw.toString(), 10) : 0
 
   const { error } = await supabase
     .from('jugadores')
@@ -110,6 +112,7 @@ export async function editarJugador(formData: FormData) {
       posicion: posicion || null,
       categoria,
       numero_camiseta,
+      goles,
     })
     .eq('id', id)
 

@@ -5,6 +5,8 @@ import { Users, Shield, Trophy, Activity, TrendingUp, Calendar, Bell, MapPin, Li
 import Link from 'next/link'
 import ActivityFeed from '@/components/admin/ActivityFeed'
 import AnalyticsChart from '@/components/admin/AnalyticsChart'
+import KPIStats from '@/components/admin/okr/KPIStats'
+import OKRList from '@/components/admin/okr/OKRList'
 
 export default async function AdminDashboardPage() {
   const supabase = await createClient()
@@ -128,7 +130,15 @@ export default async function AdminDashboardPage() {
         </span>
       </div>
 
-      {/* Grid de estadísticas */}
+      {/* SECCIÓN ESTRATÉGICA: KPIs y OKRs (NUEVO) */}
+      <div className="space-y-4">
+        <KPIStats />
+        <OKRList />
+      </div>
+
+      <div className="h-px w-full bg-slate-100 dark:bg-slate-800" />
+
+      {/* Grid de estadísticas básicas */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {stats.map((item, index) => {
           const Icon = item.icon

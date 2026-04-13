@@ -56,11 +56,18 @@ export default async function PerfilPage() {
             </p>
           </div>
 
-          <div className="pb-2 hidden lg:block">
-             <div className="px-4 py-2 bg-gray-50 rounded-xl border border-gray-100">
+          <div className="pb-2 flex flex-col gap-2 items-end">
+             <div className="px-4 py-2 bg-gray-50 rounded-xl border border-gray-100 w-full">
                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest text-center">ID Usuario</p>
                 <p className="text-xs font-mono text-gray-600">{perfil.id.substring(0, 8)}...</p>
              </div>
+             <Link 
+               href="/dashboard/admin/perfil/seguridad"
+               className="flex items-center gap-2 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-xl border border-indigo-100 transition-all font-bold text-xs"
+             >
+               <Shield size={14} />
+               Seguridad de la Matriz
+             </Link>
           </div>
         </div>
       </div>
