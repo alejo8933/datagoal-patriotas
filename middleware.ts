@@ -30,8 +30,7 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-  console.log('[middleware] pathname:', request.nextUrl.pathname, '| user:', user ? user.id : 'null', '| authError:', authError)
+  const { data: { user } } = await supabase.auth.getUser()
   const { pathname } = request.nextUrl
 
   // Función de ayuda para redirigir copiando las cookies que Supabase pudo haber refrescado

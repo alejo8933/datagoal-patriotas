@@ -7,20 +7,14 @@ import AdminHeader from '@/components/layout/AdminHeader'
 
 export default async function AdminLayout({ children }: { children: ReactNode }) {
   const supabase = await createClient()
-  const { data: { user }, error: authError } = await supabase.auth.getUser()
-
-  console.log('[AdminLayout] user:', user ? user.id : 'null', '| authError:', authError)
+  const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) {
-    console.log('[AdminLayout] Redirecting to /login because user is null')
     redirect('/login')
   }
 
   // Verificar el rol y datos del usuario saltándose RLS si está bloqueado
   const perfil = await getUserProfile(user.id)
-  const perfilError = null
-
-  console.log('[AdminLayout] perfil:', perfil, '| perfilError:', perfilError)
 
   if (!perfil) {
     console.error('[AdminLayout] Perfil not found for user:', user.id)
