@@ -1,10 +1,17 @@
-import { createClient } from '@/lib/supabase/client'
+import { createClient as createBrowserClient } from '@/lib/supabase/client'
 import type { IPlayerRepository } from '@/repositories/IPlayerRepository'
 import type { Player, CreatePlayer } from '@/types/domain/player.schema'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 export class SupabasePlayerRepository implements IPlayerRepository {
+  constructor(private customClient?: SupabaseClient<any, any, any>) {}
+
+  private getClient() {
+    return this.customClient || createBrowserClient()
+  }
+
   async getAll(): Promise<Player[]> {
-    const supabase = createClient()
+    const supabase = this.getClient()
     const { data, error } = await supabase
       .from('jugadores')
       .select('*')
@@ -14,7 +21,7 @@ export class SupabasePlayerRepository implements IPlayerRepository {
   }
 
   async getById(id: string): Promise<Player | null> {
-    const supabase = createClient()
+    const supabase = this.getClient()
     const { data, error } = await supabase
       .from('jugadores')
       .select('*')
@@ -25,7 +32,7 @@ export class SupabasePlayerRepository implements IPlayerRepository {
   }
 
   async getByCategoria(categoria: string): Promise<Player[]> {
-    const supabase = createClient()
+    const supabase = this.getClient()
     const { data, error } = await supabase
       .from('jugadores')
       .select('*')
@@ -36,7 +43,7 @@ export class SupabasePlayerRepository implements IPlayerRepository {
   }
 
   async create(datos: CreatePlayer): Promise<Player> {
-    const supabase = createClient()
+    const supabase = this.getClient()
     const { data, error } = await supabase
       .from('jugadores')
       .insert(datos)
@@ -47,7 +54,7 @@ export class SupabasePlayerRepository implements IPlayerRepository {
   }
 
   async update(id: string, datos: Partial<CreatePlayer>): Promise<Player> {
-    const supabase = createClient()
+    const supabase = this.getClient()
     const { data, error } = await supabase
       .from('jugadores')
       .update(datos)
@@ -59,7 +66,7 @@ export class SupabasePlayerRepository implements IPlayerRepository {
   }
 
   async delete(id: string): Promise<void> {
-    const supabase = createClient()
+    const supabase = this.getClient()
     const { error } = await supabase.from('jugadores').delete().eq('id', id)
     if (error) throw new Error(error.message)
   }

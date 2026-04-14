@@ -121,6 +121,16 @@ export async function eliminarEvento(formData: FormData): Promise<void> {
   }
 
   await supabase.from("eventos_partido").delete().eq("id", id);
+  
+  if (evento) {
+    await notificarActividadAdmin({
+      titulo: 'Evento de Partido Revertido',
+      descripcion: `Se ha eliminado/revertido un(a) ${evento.tipo} en el partido.`,
+      tipo: 'partido_revertido',
+      prioridad: 'media'
+    });
+  }
+
   revalidatePath(`/dashboard/entrenador/partidos`);
   revalidatePath(`/dashboard/admin/jugadores`);
 }

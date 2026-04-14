@@ -11,8 +11,8 @@ type Jugador = {
   apellido: string;
   posicion: string | null;
   categoria: string | null;
-  numero_camiseta: number | null;
-  foto_url: string | null;
+  numero_camiseta?: number | null;
+  foto_url?: string | null;
   presente: boolean | null;
   excusa: string;
   hora_llegada: string | null;
@@ -35,7 +35,7 @@ type ReporteAsistencia = {
   apellido: string;
   posicion: string | null;
   categoria: string | null;
-  numero_camiseta: number | null;
+  numero_camiseta?: number | null;
   totalEntrenamientos: number;
   presentes: number;
   ausentes: number;

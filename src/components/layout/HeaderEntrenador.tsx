@@ -8,7 +8,7 @@ import { createClient } from '@/lib/supabase/client'
 
 // ✅ Corregido: ahora apuntan a las rutas del dashboard
 const NAV_LINKS = [
-  { href: '/dashboard/equipos',                 label: 'Equipos'         },
+  { href: '/dashboard/equipos',                 label: 'Categorías'         },
   { href: '/dashboard/partidos',                label: 'Partidos'        },
   { href: '/dashboard/entrenamientos',          label: 'Entrenamientos'  },
   { href: '/dashboard/estadisticas',            label: 'Estadísticas'    },

@@ -1,6 +1,7 @@
 "use server";
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { notificarActividadAdmin } from "./notificaciones";
 
 export async function getEntrenamientosDashboard() {
   const supabase = await createClient();
@@ -81,11 +82,31 @@ export async function crearEntrenamiento(formData: FormData) {
        .eq("id", data.id);
   }
 
+  await notificarActividadAdmin({
+    titulo: 'Nuevo Entrenamiento Añadido',
+    descripcion: `Se ha registrado un nuevo entrenamiento "${payload.titulo}" para el equipo/categoría ${payload.categoria}.`,
+    tipo: 'entrenamiento_creado'
+  });
+
   revalidatePath("/dashboard/entrenamientos");
 }
 
 export async function eliminarEntrenamiento(id: string) {
   const supabase = await createClient();
+  
+  // Obtener info antes de borrar para la notificación
+  const { data: ent } = await supabase.from("entrenamientos").select("titulo, categoria").eq("id", id).single();
+  
   await supabase.from("entrenamientos").delete().eq("id", id);
+  
+  if (ent) {
+    await notificarActividadAdmin({
+      titulo: 'Entrenamiento Cancelado/Eliminado',
+      descripcion: `Se ha eliminado el entrenamiento "${ent.titulo}" de la categoría/equipo ${ent.categoria}.`,
+      tipo: 'entrenamiento_eliminado',
+      prioridad: 'alta'
+    });
+  }
+
   revalidatePath("/dashboard/entrenamientos");
 }

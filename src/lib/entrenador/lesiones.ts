@@ -75,6 +75,24 @@ export async function registrarLesion(formData: FormData) {
 
 export async function eliminarLesion(id: string) {
   const supabase = await createClient();
+  
+  // Obtener info antes de borrar para notificar
+  const { data: lesion } = await supabase
+    .from("lesiones")
+    .select("jugador_id, descripcion, jugadores(nombre, apellido)")
+    .eq("id", id)
+    .single();
+
   await supabase.from("lesiones").delete().eq("id", id);
+  
+  if (lesion && lesion.jugadores) {
+    const j = lesion.jugadores as unknown as { nombre: string; apellido: string };
+    await notificarActividadAdmin({
+      titulo: 'Lesión Eliminada',
+      descripcion: `Se ha eliminado el reporte de lesión del jugador ${j.nombre} ${j.apellido}.`,
+      tipo: 'lesion_eliminada'
+    });
+  }
+
   revalidatePath("/dashboard/entrenador/lesiones");
 }

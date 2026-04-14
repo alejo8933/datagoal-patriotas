@@ -1,4 +1,4 @@
-import { playerService } from '@/services/playerService'
+import { getPlayerServiceServer } from '@/services/playerServiceServer'
 import { AnalisisIndividualView } from '@/components/features/estadisticas/AnalisisIndividualView'
 import HeaderEntrenador from '@/components/layout/HeaderEntrenador'
 import FooterEntrenador from '@/components/layout/FooterEntrenador'
@@ -7,7 +7,8 @@ export const dynamic = 'force-dynamic'
 
 export default async function AnalisisIndividualPage() {
   try {
-    const jugadores = await playerService.getAll()
+    const playerServiceServer = await getPlayerServiceServer()
+    const jugadores = await playerServiceServer.getAll()
     
     // Extraer las categorías únicas de los jugadores devueltos
     const categoriasDisponibles = Array.from(

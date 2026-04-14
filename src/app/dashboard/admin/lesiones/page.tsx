@@ -10,8 +10,8 @@ export default async function AdminLesionesPage() {
   return (
     <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
       <LesionesPanel 
-        lesiones={lesiones} 
-        jugadores={jugadores} 
+        lesiones={lesiones as any} 
+        jugadores={jugadores as any} 
       />
     </div>
   );

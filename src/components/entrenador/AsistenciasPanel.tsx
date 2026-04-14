@@ -11,8 +11,8 @@ type Jugador = {
   apellido: string;
   posicion: string | null;
   categoria: string | null;
-  numero_camiseta: number | null;
-  foto_url: string | null;
+  numero_camiseta?: number | null;
+  foto_url?: string | null;
   presente: boolean | null;
   excusa: string;
   hora_llegada: string | null;
@@ -35,7 +35,7 @@ type ReporteAsistencia = {
   apellido: string;
   posicion: string | null;
   categoria: string | null;
-  numero_camiseta: number | null;
+  numero_camiseta?: number | null;
   totalEntrenamientos: number;
   presentes: number;
   ausentes: number;
@@ -245,7 +245,9 @@ export default function AsistenciasPanel({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {jugadores.map((jugador) => {
+                    {jugadores
+                      .filter(j => selectedEquipo === "Todos los equipos" || j.categoria === selectedEquipo)
+                      .map((jugador) => {
                       const estado = asistencias[jugador.id];
                       if (!estado) return null;
 
@@ -340,9 +342,9 @@ export default function AsistenciasPanel({
                     })}
                   </tbody>
                 </table>
-                {jugadores.length === 0 && (
+                {jugadores.filter(j => selectedEquipo === "Todos los equipos" || j.categoria === selectedEquipo).length === 0 && (
                   <div className="p-10 text-center text-gray-500 text-sm">
-                    No hay jugadores registrados activos en este entrenamiento.
+                    No hay jugadores registrados activos en este entrenamiento para la categoría seleccionada.
                   </div>
                 )}
               </div>
