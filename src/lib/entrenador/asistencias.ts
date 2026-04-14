@@ -8,7 +8,11 @@ export async function getEntrenamientos() {
     .from("entrenamientos")
     .select("id, titulo, fecha, hora, lugar, categoria, activo")
     .order("fecha", { ascending: false });
-  return data ?? [];
+  const entrenamientos = (data ?? []).map(e => ({
+    ...e,
+    titulo: e.titulo ? e.titulo.split(" | JSON_DATA:")[0] : e.titulo
+  }));
+  return entrenamientos;
 }
 
 export async function getEntrenamientoById(id: string) {
@@ -18,6 +22,9 @@ export async function getEntrenamientoById(id: string) {
     .select("id, titulo, fecha, hora, lugar, categoria")
     .eq("id", id)
     .single();
+  if (data && data.titulo) {
+    data.titulo = data.titulo.split(" | JSON_DATA:")[0];
+  }
   return data;
 }
 
@@ -25,8 +32,9 @@ export async function getJugadoresConAsistencia(entrenamientoId: string) {
   const supabase = await createClient();
 
   const { data: jugadores } = await supabase
-    .from("jugadores")
-    .select("id, nombre, apellido, posicion, categoria, numero_camiseta, foto_url")
+    .from("perfiles")
+    .select("id, nombre, apellido, posicion, categoria")
+    .eq("rol", "jugador")
     .eq("activo", true)
     .order("apellido", { ascending: true });
 
@@ -116,8 +124,9 @@ export async function getReportesAsistencia() {
   const supabase = await createClient();
 
   const { data: jugadores } = await supabase
-    .from("jugadores")
-    .select("id, nombre, apellido, posicion, categoria, numero_camiseta")
+    .from("perfiles")
+    .select("id, nombre, apellido, posicion, categoria")
+    .eq("rol", "jugador")
     .eq("activo", true)
     .order("apellido", { ascending: true });
 

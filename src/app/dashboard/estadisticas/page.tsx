@@ -1,4 +1,4 @@
-import { statisticsService } from '@/services/statisticsService'
+import { getStatisticsServiceServer } from '@/services/statisticsServiceServer'
 import { EstadisticasView } from '@/components/features/estadisticas/EstadisticasView'
 import HeaderEntrenador from '@/components/layout/HeaderEntrenador'
 import FooterEntrenador from '@/components/layout/FooterEntrenador'
@@ -7,8 +7,9 @@ export const dynamic = 'force-dynamic'
 
 export default async function EstadisticasPage() {
   try {
-    const rendimientoList = await statisticsService.getTeamPerformance()
-    const goleadoresList = await statisticsService.getGoalscorers()
+    const statisticsServiceServer = await getStatisticsServiceServer()
+    const rendimientoList = await statisticsServiceServer.getTeamPerformance()
+    const goleadoresList = await statisticsServiceServer.getGoalscorers()
 
     return (
       <>

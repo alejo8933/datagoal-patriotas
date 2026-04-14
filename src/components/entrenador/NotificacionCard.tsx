@@ -1,5 +1,7 @@
 "use client";
 
+import { Calendar, Trash2, Clock, Users, Trophy, Bell, UserPlus } from "lucide-react";
+
 type Notificacion = {
   id: string;
   titulo: string;
@@ -10,75 +12,108 @@ type Notificacion = {
   created_at: string;
 };
 
-const TIPO_ICON: Record<string, string> = {
-  partido: "⚽",
-  entrenamiento: "🏃",
-  torneo: "🏆",
-  sistema: "🔔",
+const TIPO_ICON: Record<string, React.ElementType> = {
+  partido: Calendar,
+  partido_revertido: Calendar,
+  entrenamiento: Users,
+  entrenamiento_creado: Users,
+  entrenamiento_eliminado: Users,
+  asistencia: Users,
+  torneo: Trophy,
+  sistema: Bell,
+  lesion: UserPlus,
+  lesion_eliminada: UserPlus,
+  convocatoria: Calendar,
 };
 
-const PRIORIDAD_COLOR: Record<string, string> = {
-  alta: "border-l-red-500",
-  media: "border-l-yellow-500",
-  baja: "border-l-blue-500",
+const TIPO_LABEL: Record<string, string> = {
+  partido: "Partido",
+  partido_revertido: "Cambio de partido",
+  entrenamiento: "Entrenamiento",
+  entrenamiento_creado: "Nuevo entrenamiento",
+  entrenamiento_eliminado: "Cambio de entrenamiento",
+  asistencia: "Asistencia",
+  torneo: "Torneo",
+  sistema: "Sistema",
+  lesion: "Lesión",
+  lesion_eliminada: "Actualización de lesión",
+  convocatoria: "Convocatoria",
+};
+
+const PRIORIDAD_COLORS: Record<string, { bg: string, text: string }> = {
+  alta: { bg: "bg-red-50", text: "text-red-500" },
+  media: { bg: "bg-yellow-50", text: "text-yellow-600" },
+  baja: { bg: "bg-blue-50", text: "text-blue-500" },
 };
 
 export default function NotificacionCard({
   notificacion: n,
-  onLeer,
   onEliminar,
+  onLeer,
 }: {
   notificacion: Notificacion;
-  onLeer: () => void;
   onEliminar: () => void;
+  onLeer?: () => void;
 }) {
   const fecha = new Date(n.created_at).toLocaleDateString("es-CO", {
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
+    day: "numeric",
+    month: "numeric",
+    year: "numeric",
   });
+
+  const Icon = TIPO_ICON[n.tipo] || Bell;
+  const labelCategoria = TIPO_LABEL[n.tipo] || "Notificación";
+  const prior = n.prioridad ? n.prioridad.toLowerCase() : "baja";
+  const prioridadColors = PRIORIDAD_COLORS[prior] || PRIORIDAD_COLORS.baja;
 
   return (
     <div
-      className={`bg-white border text-gray-900 border-gray-100 border-l-4 ${PRIORIDAD_COLOR[n.prioridad] ?? "border-l-gray-300"} 
-        rounded-xl p-4 flex gap-4 items-start shadow-sm hover:shadow-md transition-shadow
-        ${n.leida ? "opacity-60 bg-gray-50" : "opacity-100"}`}
+      className={`border rounded-xl p-4 flex flex-col gap-3 transition-colors ${
+        !n.leida ? "bg-red-50/20 border-red-100" : "bg-white border-gray-200"
+      }`}
     >
-      <div className="text-2xl h-10 w-10 bg-gray-50 rounded-lg flex items-center justify-center shrink-0">
-        {TIPO_ICON[n.tipo] ?? "🔔"}
-      </div>
+      <div className="flex justify-between items-start">
+        <div className="flex items-start gap-3">
+          <Icon className={`w-5 h-5 shrink-0 mt-0.5 ${!n.leida ? "text-red-600" : "text-gray-400"}`} />
+          <div>
+            <h4 className={`text-sm ${!n.leida ? "font-bold text-gray-900" : "font-semibold text-gray-700"}`}>
+              {n.titulo}
+            </h4>
+            {n.descripcion && (
+              <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                {n.descripcion}
+              </p>
+            )}
+          </div>
+        </div>
 
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-1">
-          <p className={`text-gray-900 ${!n.leida ? "font-bold" : "font-semibold"}`}>
-            {n.titulo}
-          </p>
+        <div className="flex items-center gap-2 shrink-0 ml-4">
+          <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${prioridadColors.bg} ${prioridadColors.text}`}>
+            {prior}
+          </span>
           {!n.leida && (
-            <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0" />
+            <span className="w-1.5 h-1.5 rounded-full bg-blue-600 shrink-0" />
           )}
         </div>
-        {n.descripcion && (
-          <p className="text-sm text-gray-500 line-clamp-2">{n.descripcion}</p>
-        )}
-        <p className="text-[10px] font-bold text-gray-400 mt-2 uppercase tracking-tighter">{fecha}</p>
       </div>
 
-      <div className="flex flex-col gap-2 shrink-0">
-        {!n.leida && (
+      <div className="flex justify-between items-center mt-1 pl-8">
+        <span className="text-xs text-gray-400 font-medium">
+          {labelCategoria}
+        </span>
+        <div className="flex items-center gap-3 text-gray-400">
+          <div className="flex items-center gap-1.5 text-xs font-medium">
+            <Clock className="w-3.5 h-3.5" />
+            <span>{fecha}</span>
+          </div>
           <button
-            onClick={onLeer}
-            className="text-xs font-bold text-blue-600 hover:text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md transition"
+            onClick={onEliminar}
+            className="hover:text-red-600 transition-colors"
+            title="Eliminar notificación"
           >
-            Leída
+            <Trash2 className="w-4 h-4" />
           </button>
-        )}
-        <button
-          onClick={onEliminar}
-          className="text-xs font-bold text-red-600 hover:text-red-700 bg-red-50 px-2.5 py-1 rounded-md transition"
-        >
-          Borrar
-        </button>
+        </div>
       </div>
     </div>
   );

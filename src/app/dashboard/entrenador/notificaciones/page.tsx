@@ -7,8 +7,7 @@ export default async function NotificacionesPage() {
   const notificaciones = await getNotificaciones();
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold text-white mb-6">Notificaciones</h1>
+    <div className="p-6 max-w-3xl mx-auto w-full">
       <NotificacionesPanel notificaciones={notificaciones} />
     </div>
   );

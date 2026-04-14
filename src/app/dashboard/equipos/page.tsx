@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Users, MapPin, Calendar, Star } from 'lucide-react'
+import CategoriaSelector from './CategoriaSelector'
 
 const INFO_CLUB = [
   { label: 'Fundación',  valor: '2010 — Boyacá, Colombia' },
@@ -10,17 +11,23 @@ const INFO_CLUB = [
   { label: 'Títulos',    valor: '12 en diferentes categorías' },
 ]
 
-export default async function EquiposPage() {
+export default async function EquiposPage(props: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
+  const searchParams = await props.searchParams;
+  const selectedCategoria = typeof searchParams.categoria === 'string' ? searchParams.categoria : null;
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) redirect('/login')
 
-  const { data: equipos } = await supabase
-    .from('rendimiento_equipos')
-    .select('*')
-    .eq('activo', true)
-    // we assume the table has these based on previous DB introspection
+  let query = supabase.from('rendimiento_equipos').select('*').eq('activo', true)
+  if (selectedCategoria) {
+    query = query.eq('categoria', selectedCategoria)
+  }
+  const { data: equiposFiltrados } = await query
+
+  // Obtener todas las categorías para el filtro
+  const { data: todos } = await supabase.from('rendimiento_equipos').select('categoria').eq('activo', true)
+  const categoriasUnicas = Array.from(new Set((todos || []).map(e => e.categoria).filter(Boolean)))
 
   return (
     <div className="bg-white min-h-screen rounded-xl shadow-sm border border-gray-100 overflow-hidden">
@@ -28,9 +35,9 @@ export default async function EquiposPage() {
 
         {/* Título */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Nuestros Equipos</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Nuestras Categorías</h1>
           <p className="text-base text-gray-500 mt-2">
-            Descubre todos los equipos que forman parte de la familia Escuela Patriota Sport Bacatá,
+            Descubre todas las categorías que forman parte de la familia Escuela Patriota Sport Bacatá,
             desde nuestras categorías juveniles hasta las divisiones infantiles de formación.
           </p>
         </div>
@@ -45,9 +52,16 @@ export default async function EquiposPage() {
           ))}
         </div>
 
+        {/* Filtro de Categorías */}
+        {categoriasUnicas.length > 0 && (
+          <div className="mb-8 flex items-center">
+            <CategoriaSelector categorias={categoriasUnicas} selected={selectedCategoria} />
+          </div>
+        )}
+
         {/* Grid de equipos */}
         <div className="grid md:grid-cols-2 gap-6">
-          {equipos?.map((equipo) => (
+          {equiposFiltrados?.map((equipo) => (
             <div
               key={equipo.id}
               className="rounded-lg border border-gray-200 overflow-hidden flex flex-col transition-shadow hover:shadow-md"
@@ -123,9 +137,9 @@ export default async function EquiposPage() {
               </div>
             </div>
           ))}
-          {(!equipos || equipos.length === 0) && (
+          {(!equiposFiltrados || equiposFiltrados.length === 0) && (
              <div className="col-span-full py-12 text-center text-gray-500">
-                No hay equipos registrados actualmente.
+                No se encontraron categorías.
              </div>
           )}
         </div>
