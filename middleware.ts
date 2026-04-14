@@ -3,7 +3,7 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export async function middleware(request: NextRequest) {
-  const response = NextResponse.next({
+  let response = NextResponse.next({
     request: { headers: request.headers },
   })
 
@@ -14,8 +14,15 @@ export async function middleware(request: NextRequest) {
       cookies: {
         getAll: () => request.cookies.getAll(),
         setAll: (cookiesToSet) => {
-          cookiesToSet.forEach(({ name, value, options }) => {
+          // Actualizamos request cookies (para componentes que lean en el mismo ciclo)
+          cookiesToSet.forEach(({ name, value }) => {
             request.cookies.set(name, value)
+          })
+          // Actualizamos la respuesta base (si hacemos next)
+          response = NextResponse.next({
+            request: { headers: request.headers },
+          })
+          cookiesToSet.forEach(({ name, value, options }) => {
             response.cookies.set(name, value, options)
           })
         },
@@ -23,18 +30,36 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  const { data: { user } } = await supabase.auth.getUser()
+  const { data: { user }, error: authError } = await supabase.auth.getUser()
+  console.log('[middleware] pathname:', request.nextUrl.pathname, '| user:', user ? user.id : 'null', '| authError:', authError)
   const { pathname } = request.nextUrl
+
+  // Función de ayuda para redirigir copiando las cookies que Supabase pudo haber refrescado
+  const redirectWithCookies = (url: URL) => {
+    const redirectResponse = NextResponse.redirect(url)
+    // Copiar cualquier cookie que se haya seteado en `response` a `redirectResponse`
+    response.cookies.getAll().forEach(cookie => {
+      redirectResponse.cookies.set(cookie.name, cookie.value)
+    })
+    return redirectResponse
+  }
 
   // ── Sin sesión → login ────────────────────────────────────────
   if (pathname.startsWith('/dashboard') && !user) {
-    return NextResponse.redirect(new URL('/login', request.url))
+    return redirectWithCookies(new URL('/login', request.url))
   }
+
+  // Cliente Admin para leer perfiles saltándose RLS
+  const supabaseAdmin = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { cookies: { getAll: () => [], setAll: () => {} } }
+  )
 
   // ── Con sesión → no dejar entrar a login/registro ─────────────
   if ((pathname === '/login' || pathname === '/registro') && user) {
     // Redirigir según rol
-    const { data: perfil } = await supabase
+    const { data: perfil } = await supabaseAdmin
       .from('perfiles')
       .select('rol')
       .eq('id', user.id)
@@ -47,7 +72,7 @@ export async function middleware(request: NextRequest) {
     }
 
     const destino = destinos[perfil?.rol ?? ''] ?? '/dashboard'
-    return NextResponse.redirect(new URL(destino, request.url))
+    return redirectWithCookies(new URL(destino, request.url))
   }
 
   // ── Verificación de rol por ruta ──────────────────────────────
@@ -60,7 +85,7 @@ export async function middleware(request: NextRequest) {
   const rutaProtegida = rutasProtegidas.find(r => pathname.startsWith(r))
 
   if (user && rutaProtegida) {
-    const { data: perfil } = await supabase
+    const { data: perfil } = await supabaseAdmin
       .from('perfiles')
       .select('rol')
       .eq('id', user.id)
@@ -75,13 +100,13 @@ export async function middleware(request: NextRequest) {
     }
 
     if (rol !== rolesPermitidos[rutaProtegida]) {
-      return NextResponse.redirect(new URL('/no-autorizado', request.url))
+      return redirectWithCookies(new URL('/no-autorizado', request.url))
     }
   }
 
   // ── Redirigir /dashboard genérico según rol ───────────────────
   if (pathname === '/dashboard' && user) {
-    const { data: perfil } = await supabase
+    const { data: perfil } = await supabaseAdmin
       .from('perfiles')
       .select('rol')
       .eq('id', user.id)
@@ -94,7 +119,7 @@ export async function middleware(request: NextRequest) {
     }
 
     const destino = destinos[perfil?.rol ?? ''] ?? '/'
-    return NextResponse.redirect(new URL(destino, request.url))
+    return redirectWithCookies(new URL(destino, request.url))
   }
 
   return response

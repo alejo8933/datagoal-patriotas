@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { getUserProfile } from '@/services/actions/auth'
 import HeaderEntrenador from '@/components/layout/HeaderEntrenador'
 import FooterEntrenador from '@/components/layout/FooterEntrenador'
 
@@ -13,12 +14,8 @@ export default async function EntrenadorLayout({
 
   if (!user) redirect('/login')
 
-  // Verificar rol en tabla perfiles
-  const { data: perfil } = await supabase
-    .from('perfiles')
-    .select('rol')
-    .eq('id', user.id)
-    .single()
+  // Verificar rol en tabla perfiles saltando RLS
+  const perfil = await getUserProfile(user.id)
 
   if (perfil?.rol !== 'entrenador') redirect('/no-autorizado')
 

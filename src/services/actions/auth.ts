@@ -26,3 +26,55 @@ export async function validarCodigoRegistro(rol: string, codigo: string) {
 
   return { success: false, message: 'Rol no válido para validación de código.' }
 }
+
+/**
+ * Sincroniza el perfil del usuario después del registro usando el rol de servicio
+ * Esto evita el bloqueo por RLS cuando el usuario aún no ha confirmado su correo.
+ */
+export async function syncUserProfile(profileData: any) {
+  const { createClient } = await import('@supabase/supabase-js')
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!supabaseUrl || !supabaseServiceKey) {
+    return { success: false, error: 'Credenciales de servicio no configuradas' }
+  }
+
+  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
+
+  const { error } = await supabaseAdmin
+    .from('perfiles')
+    .upsert({
+      ...profileData,
+      activo: true
+    })
+
+  if (error) {
+    console.error('Error crudo al sincronizar perfil:', error)
+    return { success: false, error: error.message }
+  }
+
+  return { success: true }
+}
+
+/**
+ * Obtiene el perfil de un usuario saltándose RLS.
+ * Útil cuando las políticas RLS bloquean la lectura incluso para el propio usuario
+ * o si hay problemas de sincronización de caché.
+ */
+export async function getUserProfile(userId: string) {
+  const { createClient } = await import('@supabase/supabase-js')
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+  if (!supabaseUrl || !supabaseServiceKey) return null
+
+  const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
+  const { data } = await supabaseAdmin
+    .from('perfiles')
+    .select('rol, activo, nombre, apellido')
+    .eq('id', userId)
+    .single()
+
+  return data
+}

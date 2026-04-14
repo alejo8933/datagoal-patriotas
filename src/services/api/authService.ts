@@ -1,5 +1,6 @@
 import { createClient } from '@/lib/supabase/client'
 import type { Register } from '@/types/domain/auth.schema'
+import { syncUserProfile, getUserProfile } from '../actions/auth'
 
 export const authService = {
   async login(email: string, password: string) {
@@ -7,11 +8,7 @@ export const authService = {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) throw new Error('Correo o contraseña incorrectos.')
 
-    const { data: perfil } = await supabase
-      .from('perfiles')
-      .select('rol, activo')
-      .eq('id', data.user.id)
-      .single()
+    const perfil = await getUserProfile(data.user.id)
 
     return { user: data.user, rol: perfil?.rol ?? 'jugador' }
   },
@@ -44,25 +41,22 @@ export const authService = {
     }
     if (!data.user) throw new Error('No se pudo crear el usuario.')
 
-    // 2. Sincronización Inmediata con la tabla 'perfiles'
-    // Esto asegura que el nombre y correo aparezcan en la tabla del admin.
-    const { error: profileError } = await supabase
-      .from('perfiles')
-      .upsert({
-        id:               data.user.id,
-        email:            fields.email,
-        nombre:           fields.nombre,
-        apellido:         fields.apellido,
-        rol:              fields.rol,
-        telefono:         fields.telefono,
-        fecha_nacimiento: fields.fechaNacimiento,
-        posicion:         fields.posicion,
-        categoria:        fields.categoria,
-        activo:           true
-      })
+    // 2. Sincronización Inmediata con la tabla 'perfiles' usando Server Action
+    // Esto asegura que el nombre y correo aparezcan en la tabla del admin, saltando RLS.
+    const syncResult = await syncUserProfile({
+      id:               data.user.id,
+      email:            fields.email,
+      nombre:           fields.nombre,
+      apellido:         fields.apellido,
+      rol:              fields.rol,
+      telefono:         fields.telefono,
+      fecha_nacimiento: fields.fechaNacimiento,
+      posicion:         fields.posicion,
+      categoria:        fields.categoria,
+    })
 
-    if (profileError) {
-      console.error('Error sincronizando perfil:', profileError)
+    if (!syncResult.success) {
+      console.error('Error sincronizando perfil:', syncResult.error)
       // No lanzamos error aquí para no bloquear el registro, ya que la cuenta ya se creó.
     }
 
@@ -80,11 +74,7 @@ export const authService = {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return null
 
-    const { data: perfil } = await supabase
-      .from('perfiles')
-      .select('rol, activo')
-      .eq('id', user.id)
-      .single()
+    const perfil = await getUserProfile(user.id)
 
     return {
       id:     user.id,

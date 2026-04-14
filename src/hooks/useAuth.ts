@@ -38,7 +38,6 @@ export function useAuth() {
       else if (rol === 'entrenador') router.push('/dashboard/entrenador')
       else                           router.push('/dashboard/jugador')
 
-      router.refresh()
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al iniciar sesión.')
     } finally {
@@ -66,7 +65,6 @@ export function useAuth() {
       await authService.logout()
       setUser(null)
       router.push('/login')
-      router.refresh()
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Error al cerrar sesión.')
     } finally {
