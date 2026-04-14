@@ -7,9 +7,13 @@ export async function getLesiones() {
   const supabase = await createClient();
   const { data } = await supabase
     .from("lesiones")
-    .select("id, descripcion, estado, fecha_lesion, fecha_retorno, jugador_id, jugadores(nombre, apellido, numero_camiseta, posicion, categoria)")
+    .select("id, descripcion, estado, fecha_lesion, fecha_retorno, jugador_id, jugadores(id, nombre, apellido, numero_camiseta, posicion, categoria)")
     .order("fecha_lesion", { ascending: false });
-  return data ?? [];
+  
+  return (data || []).map(l => ({
+    ...l,
+    jugadores: Array.isArray(l.jugadores) ? l.jugadores[0] : l.jugadores
+  })) as any[];
 }
 
 export async function getJugadoresParaLesiones() {
