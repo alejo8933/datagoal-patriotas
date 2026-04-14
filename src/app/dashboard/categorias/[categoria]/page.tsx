@@ -36,17 +36,17 @@ export default async function PlantillaPage({ params }: { params: { categoria: s
   ]
 
   const equipoFormat = {
-    nombre: equipoDB ? `Escuela Patriota Sport ${equipoDB.categoria}` : `Equipos ${categoriaStr}`
+    nombre: equipoDB ? `Escuela Patriota Sport ${equipoDB.categoria}` : `Categoría ${categoriaStr}`
   }
 
   return (
     <div className="bg-white min-h-screen rounded-xl shadow-sm border border-gray-100 p-6 sm:p-10">
       {/* Volver */}
       <Link
-        href="/dashboard/equipos"
+        href="/dashboard/categorias"
         className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-gray-800 transition-colors mb-6 font-medium"
       >
-        <ArrowLeft size={16} /> Volver a Equipos
+        <ArrowLeft size={16} /> Volver a Categorías
       </Link>
 
       {/* Título */}

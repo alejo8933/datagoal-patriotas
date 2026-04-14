@@ -59,7 +59,7 @@ export default function PlantillaView({
       {/* NAVEGACIÓN Y TÍTULO */}
       <div className="flex flex-col gap-4">
         <Link 
-          href="/dashboard/admin/equipos"
+          href="/dashboard/admin/categorias"
           className="flex items-center gap-2 text-sm font-bold text-gray-400 hover:text-red-600 transition-colors uppercase tracking-widest w-fit"
         >
           <ArrowLeft size={16} /> Volver a Categorías

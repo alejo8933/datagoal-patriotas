@@ -43,7 +43,7 @@ export default function ModalEditarEquipo({ equipo }: ModalEditarEquipoProps) {
       <button 
         onClick={() => setIsOpen(true)}
         className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition"
-        title="Editar Equipo"
+        title="Editar Categoría"
       >
         <Edit2 size={18} />
       </button>
@@ -52,7 +52,7 @@ export default function ModalEditarEquipo({ equipo }: ModalEditarEquipoProps) {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200 text-left">
           <div className="bg-white rounded-2xl shadow-xl w-full max-w-md overflow-hidden animate-in zoom-in-95 duration-200">
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-xl font-bold text-gray-900">Editar Equipo</h2>
+              <h2 className="text-xl font-bold text-gray-900">Editar Categoría</h2>
               <button 
                 onClick={() => !isLoading && setIsOpen(false)}
                 className="text-gray-400 hover:text-gray-700 transition"
@@ -70,12 +70,12 @@ export default function ModalEditarEquipo({ equipo }: ModalEditarEquipoProps) {
               
               <div className="space-y-4">
                 <div className="space-y-1.5">
-                  <label htmlFor="equipo" className="text-sm font-medium text-gray-700">Nombre del Equipo <span className="text-red-500">*</span></label>
+                  <label htmlFor="equipo" className="text-sm font-medium text-gray-700">Nombre de la Categoría <span className="text-red-500">*</span></label>
                   <input required type="text" id="equipo" name="equipo" defaultValue={equipo.equipo} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition" />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label htmlFor="categoria" className="text-sm font-medium text-gray-700">Categoría <span className="text-red-500">*</span></label>
+                  <label htmlFor="categoria" className="text-sm font-medium text-gray-700">Rango / Nivel <span className="text-red-500">*</span></label>
                   <select required id="categoria" name="categoria" defaultValue={equipo.categoria || ''} className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition bg-white text-gray-900">
                     <option value="">Selecciona...</option>
                     <option value="Sub-9">Sub-9</option>

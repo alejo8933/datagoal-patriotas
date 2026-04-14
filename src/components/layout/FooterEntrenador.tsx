@@ -17,7 +17,7 @@ export default function FooterEntrenador() {
         <div>
           <h3 className="font-semibold text-sm text-gray-700 mb-3">Enlaces Rápidos</h3>
           {[
-            { href: '/dashboard/equipos',        label: 'Equipos'        },
+            { href: '/dashboard/categorias',     label: 'Categorías'     },
             { href: '/dashboard/partidos',       label: 'Partidos'       },
             { href: '/dashboard/entrenamientos', label: 'Entrenamientos' },
             { href: '/dashboard/estadisticas',   label: 'Estadísticas'   },

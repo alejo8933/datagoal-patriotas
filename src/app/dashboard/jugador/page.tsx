@@ -14,11 +14,11 @@ export default async function JugadorDashboardPage() {
 
   // Fetch player specific data
   // 1. Datos básicos del jugador
-  const { data: jugadorInfo } = await supabase
-    .from('jugadores')
-    .select('*')
-    .ilike('nombre', `%${nombre.split(' ')[0]}%`) // Búsqueda aproximada por nombre
-    .maybeSingle()
+   const { data: jugadorInfo } = await supabase
+     .from('jugadores')
+     .select('*, categorias_maestras(nombre), rendimiento_equipos(equipo)')
+     .ilike('nombre', `%${nombre.split(' ')[0]}%`)
+     .maybeSingle()
 
   // 2. Próximo partido para su categoría
   const categoria = jugadorInfo?.categoria || 'General'
@@ -62,6 +62,11 @@ export default async function JugadorDashboardPage() {
           </h1>
           <p className="text-sm text-gray-500 mt-1">
             Tu progreso en la <span className="font-semibold text-red-600">Escuela Patriota Sport Bacatá</span>
+            {jugadorInfo && (
+              <span className="ml-2 px-2 py-0.5 bg-gray-100 text-gray-400 rounded text-[10px] font-black uppercase tracking-widest">
+                {jugadorInfo.categorias_maestras?.nombre} {jugadorInfo.rendimiento_equipos?.equipo ? `— ${jugadorInfo.rendimiento_equipos.equipo}` : ''}
+              </span>
+            )}
           </p>
         </div>
         <div className="hidden md:flex items-center gap-1.5 text-xs font-bold text-gray-500 bg-white px-3 py-1.5 rounded-full border border-gray-100 shadow-sm">

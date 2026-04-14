@@ -10,14 +10,17 @@ export async function crearJugador(formData: FormData) {
   const nombre = formData.get('nombre')?.toString().trim()
   const apellido = formData.get('apellido')?.toString().trim()
   const posicion = formData.get('posicion')?.toString().trim()
-  const categoria = formData.get('categoria')?.toString().trim()
+  
+  // Jerarquía
+  const categoria_id = formData.get('categoria_id')?.toString().trim()
+  const equipo_id = formData.get('equipo_id')?.toString().trim() || null
   const numero_camiseta_raw = formData.get('numero_camiseta')
 
   // Validación Base de Servidor
-  if (!nombre || !apellido || !categoria) {
+  if (!nombre || !apellido || !categoria_id) {
     return {
       success: false,
-      message: 'Nombre, Apellido y Categoría son campos estrictamente obligatorios.',
+      message: 'Nombre, Apellido y Categoría Maestra son campos estrictamente obligatorios.',
     }
   }
 
@@ -30,19 +33,19 @@ export async function crearJugador(formData: FormData) {
     }
   }
 
-  // 2. Verificación de Duplicados GLOBAL (Asegura una única categoría por jugador)
+  // 2. Verificación de Duplicados GLOBAL
   const { data: existente } = await supabase
     .from('jugadores')
-    .select('id, categoria')
+    .select('id, categoria_id')
     .eq('nombre', nombre)
     .eq('apellido', apellido)
-    .eq('activo', true) // Solo si está activo
+    .eq('activo', true)
     .single()
 
   if (existente) {
     return {
       success: false,
-      message: `El jugador ${nombre} ${apellido} ya está registrado y activo en la categoría ${existente.categoria}. Para moverlo, use la función de 'Trasladar'.`,
+      message: `El jugador ${nombre} ${apellido} ya está registrado y activo. Para moverlo, use la función de 'Trasladar'.`,
     }
   }
 
@@ -54,7 +57,8 @@ export async function crearJugador(formData: FormData) {
         nombre,
         apellido,
         posicion: posicion || null,
-        categoria,
+        categoria_id,
+        equipo_id,
         numero_camiseta,
         goles: 0,
         asistencias: 0,
@@ -90,11 +94,14 @@ export async function editarJugador(formData: FormData) {
   const nombre = formData.get('nombre')?.toString().trim()
   const apellido = formData.get('apellido')?.toString().trim()
   const posicion = formData.get('posicion')?.toString().trim()
-  const categoria = formData.get('categoria')?.toString().trim()
+  
+  // Jerarquía
+  const categoria_id = formData.get('categoria_id')?.toString().trim()
+  const equipo_id = formData.get('equipo_id')?.toString().trim() || null
   const numero_camiseta_raw = formData.get('numero_camiseta')
   const goles_raw = formData.get('goles')
 
-  if (!id || !nombre || !apellido || !categoria) {
+  if (!id || !nombre || !apellido || !categoria_id) {
     return {
       success: false,
       message: 'ID, Nombre, Apellido y Categoría son campos obligatorios.',
@@ -110,7 +117,8 @@ export async function editarJugador(formData: FormData) {
       nombre,
       apellido,
       posicion: posicion || null,
-      categoria,
+      categoria_id,
+      equipo_id,
       numero_camiseta,
       goles,
     })

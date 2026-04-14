@@ -11,6 +11,13 @@ export default async function PanelEntrenadorPage() {
 
   const nombre = user.user_metadata?.full_name ?? user.email?.split('@')[0] ?? 'Entrenador'
 
+  // Obtener Equipo y Categoría del Entrenador
+  const { data: equipoPropio } = await supabase
+    .from('rendimiento_equipos')
+    .select('*, categorias_maestras(nombre)')
+    .eq('tecnico_id', user.id)
+    .maybeSingle()
+
   // KPI 1 — Jugadores activos
   const { data: jugadores } = await supabase
     .from('jugadores')
@@ -163,7 +170,7 @@ export default async function PanelEntrenadorPage() {
             <span className="text-red-500">↗</span> Panel del Entrenador
           </h1>
           <p className="text-sm text-gray-500 mt-0.5">
-            Bienvenido, {nombre} · Escuela Patriota Sport Bacatá
+            Bienvenido, {nombre} {equipoPropio ? `· ${equipoPropio.categorias_maestras?.nombre} - ${equipoPropio.equipo}` : '· Escuela Patriota Sport Bacatá'}
           </p>
         </div>
         <span className="flex items-center gap-1.5 text-xs font-medium text-green-600">

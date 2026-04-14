@@ -21,7 +21,7 @@ export default async function AdminArchivoPage() {
 
   const sections = [
     { name: "Jugadores",      data: jugadores,      icon: Users,     table: "jugadores",           path: "/dashboard/admin/jugadores" },
-    { name: "Equipos",        data: equipos,        icon: Shield,    table: "rendimiento_equipos", path: "/dashboard/admin/equipos" },
+    { name: "Categorías",     data: equipos,        icon: Shield,    table: "rendimiento_equipos", path: "/dashboard/admin/categorias" },
     { name: "Usuarios",       data: usuarios,       icon: RotateCcw, table: "perfiles",            path: "/dashboard/admin/usuarios" },
     { name: "Partidos",       data: partidos,       icon: Trophy,    table: "partidos",            path: "/dashboard/admin/partidos" },
     { name: "Entrenamientos", data: entrenamientos, icon: Activity,  table: "entrenamientos",      path: "/dashboard/admin/entrenamientos" },

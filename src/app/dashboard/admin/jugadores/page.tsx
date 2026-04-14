@@ -13,7 +13,7 @@ export default async function AdminJugadoresPage() {
   // Fetching public.jugadores (solo activos)
   const { data: jugadores, error } = await supabase
     .from('jugadores')
-    .select('*')
+    .select('*, categorias_maestras(nombre), rendimiento_equipos(equipo)')
     .eq('activo', true)
     .order('apellido')
 
@@ -36,7 +36,8 @@ export default async function AdminJugadoresPage() {
             filas={(jugadores || []).map(j => [
               j.nombre, 
               j.apellido, 
-              j.categoria || '--', 
+              j.categorias_maestras?.nombre || j.categoria || '--', 
+              j.rendimiento_equipos?.equipo || '--',
               j.posicion || '--', 
               j.goles || 0, 
               j.tarjetas_amarillas || 0, 
@@ -95,12 +96,19 @@ export default async function AdminJugadoresPage() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <Link 
-                        href={`/dashboard/admin/equipos?search=${jugador.categoria}`}
-                        className="px-3 py-1 rounded-lg text-[10px] font-black uppercase bg-red-50/50 text-red-600 border border-red-100/50 tracking-tight hover:bg-red-600 hover:text-white transition-all"
-                      >
-                        {jugador.categoria || 'Sin Cat.'}
-                      </Link>
+                      <div className="flex flex-col items-center gap-1">
+                        <Link 
+                          href={`/dashboard/admin/categorias`}
+                          className="px-3 py-1 rounded-lg text-[10px] font-black uppercase bg-red-50 text-red-600 border border-red-100 tracking-tight hover:bg-red-600 hover:text-white transition-all"
+                        >
+                          {jugador.categorias_maestras?.nombre || jugador.categoria || 'Sin Cat.'}
+                        </Link>
+                        {jugador.rendimiento_equipos?.equipo && (
+                          <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest leading-none">
+                            {jugador.rendimiento_equipos.equipo}
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td className="px-6 py-4 text-center text-gray-500 font-bold text-xs">{jugador.posicion || '--'}</td>
                     <td className="px-6 py-4 text-center">

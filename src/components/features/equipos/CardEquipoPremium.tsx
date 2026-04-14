@@ -13,10 +13,14 @@ interface Equipo {
   fundacion?: number
   sede?: string
   tecnico?: string
-  logros?: any // Parseado como array de strings
+  logros?: any
   puntos?: number
   partidos?: number
   activo?: boolean
+  genero?: string
+  edades?: string
+  cupos?: number
+  horario?: string
 }
 
 export default function CardEquipoPremium({ equipo }: { equipo: Equipo }) {
@@ -39,9 +43,16 @@ export default function CardEquipoPremium({ equipo }: { equipo: Equipo }) {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40 to-transparent" />
         
-        {/* Category Badge */}
-        <div className="absolute top-6 left-6 px-4 py-1.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-full">
-          <span className="text-white text-[10px] font-black uppercase tracking-widest">{equipo.categoria}</span>
+        {/* Category & Gender Badge */}
+        <div className="absolute top-6 left-6 flex flex-col gap-2">
+          <div className="px-4 py-1.5 bg-white/10 backdrop-blur-md border border-white/20 rounded-full">
+            <span className="text-white text-[10px] font-black uppercase tracking-widest">{equipo.categoria}</span>
+          </div>
+          {equipo.genero && (
+            <div className="px-3 py-1 bg-red-600/80 backdrop-blur-sm rounded-full text-center">
+              <span className="text-white text-[9px] font-black uppercase tracking-widest">{equipo.genero}</span>
+            </div>
+          )}
         </div>
 
 
@@ -65,24 +76,38 @@ export default function CardEquipoPremium({ equipo }: { equipo: Equipo }) {
         {/* Quick Stats Grid */}
         <div className="grid grid-cols-2 gap-4">
           <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-2xl">
-            <div className="p-2 bg-white text-gray-400 rounded-xl shadow-sm">
+            <div className="p-2 bg-white text-red-500 rounded-xl shadow-sm">
               <Calendar size={16} />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Fundación</p>
-              <p className="text-sm font-black text-gray-700">{equipo.fundacion || '2010'}</p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Edades</p>
+              <p className="text-sm font-black text-gray-700">{equipo.edades || 'N/A'}</p>
             </div>
           </div>
           <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-2xl">
             <div className="p-2 bg-white text-gray-400 rounded-xl shadow-sm">
-              <MapPin size={16} />
+              <Users size={16} />
             </div>
             <div>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Sede</p>
-              <p className="text-sm font-black text-gray-700 truncate w-24" title={equipo.sede || 'Cancha Bacatá'}>
-                {equipo.sede || 'Bacatá'}
-              </p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Cupos</p>
+              <p className="text-sm font-black text-gray-700">{equipo.cupos || '25'}</p>
             </div>
+          </div>
+        </div>
+
+        {/* Schedule & Sede */}
+        <div className="grid grid-cols-1 gap-3 px-1">
+          <div className="flex items-center gap-3 text-sm text-gray-600 font-bold">
+            <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-600">
+               <Calendar size={14} />
+            </div>
+            <span className="text-[11px] truncate uppercase tracking-tight">{equipo.horario || 'Horario por asignar'}</span>
+          </div>
+          <div className="flex items-center gap-3 text-sm text-gray-600 font-bold">
+            <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-500">
+               <MapPin size={14} />
+            </div>
+            <span className="text-[11px] truncate uppercase tracking-tight">{equipo.sede || 'Sede Principal'}</span>
           </div>
         </div>
 
@@ -118,7 +143,7 @@ export default function CardEquipoPremium({ equipo }: { equipo: Equipo }) {
         {/* ACTION BUTTONS PRIMARY */}
         <div className="grid grid-cols-2 gap-3 pt-4">
           <Link 
-            href={`/dashboard/admin/equipos/${equipo.id}/plantilla`}
+            href={`/dashboard/admin/categorias/${equipo.id}/plantilla`}
             className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-900 text-white font-black rounded-2xl hover:bg-black transition-all text-[10px] uppercase tracking-widest shadow-lg shadow-gray-900/10"
           >
             <Users2 size={16} className="text-red-500" />
@@ -136,7 +161,7 @@ export default function CardEquipoPremium({ equipo }: { equipo: Equipo }) {
           <ModalEliminar 
             tabla="rendimiento_equipos" 
             idRegistro={equipo.id} 
-            pathRevalidacion="/dashboard/admin/equipos"
+            pathRevalidacion="/dashboard/admin/categorias"
             modo="inactivo"
             etiqueta="Desactivar"
             esIcono={false}

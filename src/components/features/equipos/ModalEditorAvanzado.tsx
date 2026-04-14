@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { Settings2, X, Loader2, Shield, User, MapPin, Calendar, Trash2 } from 'lucide-react'
+import { Settings2, X, Loader2, Shield, User, MapPin, Calendar, Trash2, Users, Activity } from 'lucide-react'
 import { editarEquipo } from '@/services/actions/equipos'
 import { useEntrenadores } from '@/hooks/useEntrenadores'
 
@@ -14,6 +14,10 @@ interface ModalEditorAvanzadoProps {
     tecnico_id: string | null
     sede: string | null
     fundacion: number | null
+    genero?: string | null
+    edades?: string | null
+    cupos?: number | null
+    horario?: string | null
   }
 }
 
@@ -126,9 +130,60 @@ export default function ModalEditorAvanzado({ equipo }: ModalEditorAvanzadoProps
                   </select>
                 </div>
 
+                {/* Rango de Edad */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Rango de Edad</label>
+                  <div className="relative">
+                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                    <input 
+                      name="edades" 
+                      defaultValue={equipo.edades || ''}
+                      placeholder="Ej: 10 - 12 años"
+                      className="w-full pl-12 pr-6 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-red-500/20 focus:ring-4 focus:ring-red-500/5 outline-none transition-all font-bold text-gray-900" 
+                    />
+                  </div>
+                </div>
+
+                {/* Género */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Género</label>
+                  <select 
+                    name="genero" 
+                    defaultValue={equipo.genero || 'Mixto'}
+                    className="w-full px-6 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-red-500/20 focus:ring-4 focus:ring-red-500/5 outline-none transition-all font-bold text-gray-900 appearance-none bg-white"
+                  >
+                    <option value="Mixto">Mixto</option>
+                    <option value="Masculino">Masculino</option>
+                    <option value="Femenino">Femenino</option>
+                  </select>
+                </div>
+
+                {/* Cupos */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Cupos Máximos</label>
+                  <input 
+                    type="number" 
+                    name="cupos" 
+                    defaultValue={equipo.cupos || 25}
+                    min="1"
+                    className="w-full px-6 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-red-500/20 focus:ring-4 focus:ring-red-500/5 outline-none transition-all font-bold text-gray-900" 
+                  />
+                </div>
+
+                {/* Horario */}
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Horario de Entrenamiento</label>
+                  <input 
+                    name="horario" 
+                    defaultValue={equipo.horario || ''}
+                    placeholder="Ej: Lun-Mie 4-6 PM"
+                    className="w-full px-6 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-red-500/20 focus:ring-4 focus:ring-red-500/5 outline-none transition-all font-bold text-gray-900" 
+                  />
+                </div>
+
                 {/* Director Técnico */}
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Estrategia (Director Técnico)</label>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Entrenador Responsable</label>
                   <div className="relative">
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                     <select 
@@ -148,7 +203,7 @@ export default function ModalEditorAvanzado({ equipo }: ModalEditorAvanzadoProps
 
                 {/* Sede */}
                 <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Sede de Operaciones</label>
+                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Sede Principal</label>
                   <div className="relative">
                     <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                     <input 
@@ -159,21 +214,8 @@ export default function ModalEditorAvanzado({ equipo }: ModalEditorAvanzadoProps
                   </div>
                 </div>
 
-                {/* Fundación */}
-                <div className="space-y-2">
-                  <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Año de Inicio</label>
-                  <div className="relative">
-                    <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-                    <input 
-                      type="number" 
-                      name="fundacion" 
-                      defaultValue={equipo.fundacion || 2024}
-                      min="2010"
-                      max="2030"
-                      className="w-full pl-12 pr-6 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-red-500/20 focus:ring-4 focus:ring-red-500/5 outline-none transition-all font-bold text-gray-900" 
-                    />
-                  </div>
-                </div>
+                {/* Fundación (Oculto) */}
+                <input type="hidden" name="fundacion" defaultValue={equipo.fundacion || 2024} />
               </div>
 
               {/* Botones de Acción */}

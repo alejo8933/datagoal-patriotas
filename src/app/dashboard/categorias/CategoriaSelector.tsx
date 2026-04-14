@@ -23,9 +23,9 @@ export default function CategoriaSelector({
           onChange={(e) => {
             const val = e.target.value;
             if (val) {
-              router.push(`/dashboard/equipos?categoria=${val}`);
+              router.push(`/dashboard/categorias?categoria=${val}`);
             } else {
-              router.push(`/dashboard/equipos`);
+              router.push(`/dashboard/categorias`);
             }
           }}
           className="appearance-none bg-transparent outline-none pr-10 pl-2 py-2 text-sm font-bold text-gray-900 cursor-pointer w-full focus:ring-0"

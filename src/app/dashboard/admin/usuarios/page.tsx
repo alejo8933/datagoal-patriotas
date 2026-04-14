@@ -85,11 +85,11 @@ export default async function AdminUsuariosPage() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:border-red-200 transition-colors">
              <span className="inline-block px-3 py-1 bg-red-50 text-red-600 rounded-lg text-[10px] font-bold uppercase tracking-widest mb-3">Administrador</span>
-             <p className="text-sm text-gray-500 font-medium leading-relaxed">Acceso completo a todos los módulos: Usuarios, Finazas, Equipos y Entrenamientos.</p>
+             <p className="text-sm text-gray-500 font-medium leading-relaxed">Acceso completo a todos los módulos: Usuarios, Finazas, Categorías y Entrenamientos.</p>
           </div>
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:border-blue-200 transition-colors">
              <span className="inline-block px-3 py-1 bg-blue-50 text-blue-600 rounded-lg text-[10px] font-bold uppercase tracking-widest mb-3">Entrenador</span>
-             <p className="text-sm text-gray-500 font-medium leading-relaxed">Gestión operativa de equipos, asistencia a entrenamientos y registro de desempeño técnico.</p>
+             <p className="text-sm text-gray-500 font-medium leading-relaxed">Gestión operativa de categorías, asistencia a entrenamientos y registro de desempeño técnico.</p>
           </div>
           <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:border-emerald-200 transition-colors">
              <span className="inline-block px-3 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-bold uppercase tracking-widest mb-3">Jugador</span>

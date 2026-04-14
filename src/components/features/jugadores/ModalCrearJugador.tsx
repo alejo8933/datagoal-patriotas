@@ -1,15 +1,51 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Plus, X, Loader2 } from 'lucide-react'
 import { crearJugador } from '@/services/actions/jugadores'
+import { createClient } from '@/lib/supabase/client'
 
 export default function ModalCrearJugador() {
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [categoriasMaestras, setCategoriasMaestras] = useState<{ id: string, nombre: string }[]>([])
+  const [equipos, setEquipos] = useState<{ id: string, equipo: string, categoria_id: string }[]>([])
+  const [selectedCategoria, setSelectedCategoria] = useState<string>('')
+  const [loadingData, setLoadingData] = useState(false)
   const [error, setError] = useState<string | null>(null)
   
   const formRef = useRef<HTMLFormElement>(null)
+
+  // Cargar datos reales desde la DB
+  useEffect(() => {
+    if (isOpen) {
+      const fetchData = async () => {
+        setLoadingData(true)
+        const supabase = createClient()
+        
+        // Cargar Categorías Maestras
+        const { data: catData } = await supabase
+          .from('categorias_maestras')
+          .select('id, nombre')
+          .eq('activo', true)
+          .order('nombre')
+        
+        // Cargar Equipos
+        const { data: eqData } = await supabase
+          .from('rendimiento_equipos')
+          .select('id, equipo, categoria_id')
+          .eq('activo', true)
+        
+        if (catData) setCategoriasMaestras(catData)
+        if (eqData) setEquipos(eqData)
+        setLoadingData(false)
+      }
+      fetchData()
+    }
+  }, [isOpen])
+
+  // Filtrar equipos según la categoría seleccionada
+  const equiposFiltrados = equipos.filter(eq => eq.categoria_id === selectedCategoria)
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -75,16 +111,37 @@ export default function ModalCrearJugador() {
                   </div>
                 </div>
 
+                {/* Nivel 1: Categoría Maestra */}
                 <div className="space-y-1.5">
-                  <label htmlFor="categoria" className="text-sm font-medium text-gray-700">Categoría <span className="text-red-500">*</span></label>
-                  <select required id="categoria" name="categoria" className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition bg-white">
-                    <option value="">Selecciona una categoría...</option>
-                    <option value="Sub-9">Sub-9</option>
-                    <option value="Sub-11">Sub-11</option>
-                    <option value="Sub-13">Sub-13</option>
-                    <option value="Sub-15">Sub-15</option>
-                    <option value="Sub-17">Sub-17</option>
-                    <option value="Libre">Libre</option>
+                  <label htmlFor="categoria_id" className="text-sm font-medium text-gray-700">Categoría Maestra <span className="text-red-500">*</span></label>
+                  <select 
+                    required 
+                    id="categoria_id" 
+                    name="categoria_id" 
+                    value={selectedCategoria}
+                    onChange={(e) => setSelectedCategoria(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition bg-white text-gray-900"
+                  >
+                    <option value="">{loadingData ? 'Cargando...' : 'Selecciona categoría maestra...'}</option>
+                    {categoriasMaestras.map((cat) => (
+                      <option key={cat.id} value={cat.id}>{cat.nombre}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Nivel 2: Equipo (Filtrado) */}
+                <div className="space-y-1.5">
+                  <label htmlFor="equipo_id" className="text-sm font-medium text-gray-700">Equipo Específico (Opcional)</label>
+                  <select 
+                    id="equipo_id" 
+                    name="equipo_id" 
+                    disabled={!selectedCategoria}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500/20 focus:border-red-500 transition bg-white text-gray-900 disabled:bg-gray-50"
+                  >
+                    <option value="">{selectedCategoria ? 'Sin equipo (Solo categoría)' : 'Selecciona categoría primero...'}</option>
+                    {equiposFiltrados.map((eq) => (
+                      <option key={eq.id} value={eq.id}>{eq.equipo}</option>
+                    ))}
                   </select>
                 </div>
 

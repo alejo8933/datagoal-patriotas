@@ -1,11 +1,15 @@
 'use client'
 
 import { useState, useRef } from 'react'
-import { PlusCircle, X, Loader2, Shield, User, MapPin, Calendar } from 'lucide-react'
+import { PlusCircle, X, Loader2, Shield, User, MapPin, Calendar, Users, Activity } from 'lucide-react'
 import { crearEquipo } from '@/services/actions/equipos'
 import { useEntrenadores } from '@/hooks/useEntrenadores'
 
-export default function ModalCrearEquipo() {
+interface ModalCrearEquipoProps {
+  categoriasMaestras: any[]
+}
+
+export default function ModalCrearEquipo({ categoriasMaestras }: ModalCrearEquipoProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -38,7 +42,7 @@ export default function ModalCrearEquipo() {
         className="group bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest transition-all shadow-lg shadow-red-500/20 flex items-center gap-3 active:scale-95"
       >
         <PlusCircle size={18} className="group-hover:rotate-90 transition-transform duration-300" />
-        Registrar Equipo
+        Registrar Nuevo Equipo
       </button>
 
       {isOpen && (
@@ -53,7 +57,7 @@ export default function ModalCrearEquipo() {
                 </div>
                 <div>
                   <h2 className="text-2xl font-black text-gray-900 tracking-tight">Registrar Equipo</h2>
-                  <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Alta de nueva categoría</p>
+                  <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Vincular grupo a categoría maestra</p>
                 </div>
               </div>
               <button 
@@ -73,64 +77,69 @@ export default function ModalCrearEquipo() {
               )}
               
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Nombre del Equipo */}
+                {/* Categoría Maestra (PADRE) */}
                 <div className="space-y-2 md:col-span-2">
-                  <label htmlFor="equipo" className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Nombre del Equipo *</label>
+                  <label htmlFor="categoria_id" className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Categoría Maestra (Rango) *</label>
+                  <select 
+                    required 
+                    id="categoria_id" 
+                    name="categoria_id" 
+                    className="w-full px-5 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-red-500/20 focus:ring-4 focus:ring-red-500/5 outline-none transition-all font-bold text-gray-900 bg-white"
+                  >
+                    <option value="">Selecciona la categoría superior...</option>
+                    {categoriasMaestras.map(cat => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.nombre} ({cat.edades})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Nombre del Equipo */}
+                <div className="space-y-2">
+                  <label htmlFor="equipo" className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Sufijo / Nombre del Equipo *</label>
                   <div className="relative">
                      <input 
                        required 
                        type="text" 
                        id="equipo" 
                        name="equipo" 
-                       pattern="[A-Za-z0-9À-ÿ\s-]+"
-                       title="Solo letras, números y guiones"
                        className="w-full px-5 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-red-500/20 focus:ring-4 focus:ring-red-500/5 outline-none transition-all font-bold text-gray-900" 
-                       placeholder="Ej: Patriotas FC Base" 
+                       placeholder="Ej: Elite, Base, Grupo A" 
                      />
                   </div>
                 </div>
 
-                {/* Categoria */}
+                {/* Color (Opcional) */}
                 <div className="space-y-2">
-                  <label htmlFor="categoria" className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Categoría *</label>
-                  <select 
-                    required 
-                    id="categoria" 
-                    name="categoria" 
-                    className="w-full px-5 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-red-500/20 focus:ring-4 focus:ring-red-500/5 outline-none transition-all font-bold text-gray-900 bg-white"
-                  >
-                    <option value="">Selecciona...</option>
-                    <option value="Sub-9">Sub-9</option>
-                    <option value="Sub-11">Sub-11</option>
-                    <option value="Sub-13">Sub-13</option>
-                    <option value="Sub-15">Sub-15</option>
-                    <option value="Sub-17">Sub-17</option>
-                    <option value="Libre">Libre</option>
-                    <option value="Juvenil">Juvenil</option>
-                    <option value="Infantil">Infantil</option>
-                  </select>
+                  <label htmlFor="color" className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Color del Equipo</label>
+                  <input 
+                    type="text" 
+                    id="color" 
+                    name="color" 
+                    placeholder="Ej: Azul, Rojo, Alterno"
+                    className="w-full px-5 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-red-500/20 focus:ring-4 focus:ring-red-500/5 outline-none transition-all font-bold text-gray-900" 
+                  />
                 </div>
 
-                {/* Año Fundacion */}
-                <div className="space-y-2">
-                  <label htmlFor="fundacion" className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Año de Fundación</label>
+                {/* Horario */}
+                <div className="space-y-2 md:col-span-2">
+                  <label htmlFor="horario" className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Horario Específico</label>
                   <div className="relative">
-                     <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
+                     <Activity className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                      <input 
-                       type="number" 
-                       id="fundacion" 
-                       name="fundacion" 
-                       defaultValue="2024"
-                       min="2010"
-                       max="2030"
+                       type="text" 
+                       id="horario" 
+                       name="horario" 
+                       placeholder="Ej: Sábados y Domingos 8-10 AM"
                        className="w-full pl-12 pr-5 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-red-500/20 focus:ring-4 focus:ring-red-500/5 outline-none transition-all font-bold text-gray-900" 
                      />
                   </div>
                 </div>
 
-                {/* Director Técnico (Select con Cascade de Coaches) */}
+                {/* Director Técnico */}
                 <div className="space-y-2">
-                  <label htmlFor="tecnico_id" className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Director Técnico</label>
+                  <label htmlFor="tecnico_id" className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Entrenador Responsable</label>
                   <div className="relative">
                      <User className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                      <select 
@@ -138,7 +147,7 @@ export default function ModalCrearEquipo() {
                        name="tecnico_id" 
                        className="w-full pl-12 pr-5 py-4 bg-gray-50 border border-transparent rounded-2xl focus:bg-white focus:border-red-500/20 focus:ring-4 focus:ring-red-500/5 outline-none transition-all font-bold text-gray-900 bg-white"
                      >
-                       <option value="">{loadingCoaches ? 'Cargando técnicos...' : 'Selecciona un técnico...'}</option>
+                       <option value="">{loadingCoaches ? 'Cargando...' : 'Selecciona un entrenador...'}</option>
                        {entrenadores.map(coach => (
                          <option key={coach.id} value={coach.id}>
                            {coach.nombre} {coach.apellido}
@@ -150,7 +159,7 @@ export default function ModalCrearEquipo() {
 
                 {/* Sede */}
                 <div className="space-y-2">
-                  <label htmlFor="sede" className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Sede / Cancha</label>
+                  <label htmlFor="sede" className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Sede Principal</label>
                   <div className="relative">
                      <MapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                      <input 
@@ -184,7 +193,7 @@ export default function ModalCrearEquipo() {
                        <Loader2 size={16} className="animate-spin" />
                        Procesando...
                     </div>
-                  ) : 'Guardar Equipo'}
+                  ) : 'Registrar Equipo'}
                 </button>
               </div>
             </form>

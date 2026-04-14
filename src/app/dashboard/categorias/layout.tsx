@@ -2,7 +2,7 @@ import { ReactNode } from 'react'
 import HeaderEntrenador from '@/components/layout/HeaderEntrenador'
 import FooterEntrenador from '@/components/layout/FooterEntrenador'
 
-export default function EquiposLayout({ children }: { children: ReactNode }) {
+export default function CategoriasLayout({ children }: { children: ReactNode }) {
   return (
     <>
       <HeaderEntrenador />

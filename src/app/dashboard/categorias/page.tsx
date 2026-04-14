@@ -11,7 +11,7 @@ const INFO_CLUB = [
   { label: 'Títulos',    valor: '12 en diferentes categorías' },
 ]
 
-export default async function EquiposPage(props: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
+export default async function CategoriasPage(props: { searchParams: Promise<{ [key: string]: string | string[] | undefined }> }) {
   const searchParams = await props.searchParams;
   const selectedCategoria = typeof searchParams.categoria === 'string' ? searchParams.categoria : null;
   const supabase = await createClient()
@@ -38,7 +38,7 @@ export default async function EquiposPage(props: { searchParams: Promise<{ [key:
           <h1 className="text-3xl font-bold text-gray-900">Nuestras Categorías</h1>
           <p className="text-base text-gray-500 mt-2">
             Descubre todas las categorías que forman parte de la familia Escuela Patriota Sport Bacatá,
-            desde nuestras categorías juveniles hasta las divisiones infantiles de formación.
+            desde nuestras divisiones juveniles hasta las infantiles de formación.
           </p>
         </div>
 
@@ -92,14 +92,17 @@ export default async function EquiposPage(props: { searchParams: Promise<{ [key:
 
                 {/* Info */}
                 <div className="grid grid-cols-2 gap-y-3 gap-x-2 mt-2">
-                  <p className="text-sm text-gray-500 flex items-center gap-2">
-                    <Users size={16} className="text-gray-400" /> Plantilla activa
+                  <p className="text-sm text-gray-500 flex items-center gap-2 font-bold text-red-600">
+                    <Users size={16} /> {equipo.genero || 'Mixto'}
                   </p>
                   <p className="text-sm text-gray-500 flex items-center gap-2">
-                    <Calendar size={16} className="text-gray-400" /> Fundado {equipo.fundacion || 2015}
+                    <Calendar size={16} className="text-gray-400" /> Edades {equipo.edades || 'N/A'}
                   </p>
                   <p className="text-sm text-gray-500 flex items-center gap-2 col-span-2">
-                    <MapPin size={16} className="text-gray-400 shrink-0" /> {equipo.sede || 'Cancha Sintética Bacatá'}
+                    <MapPin size={16} className="text-gray-400 shrink-0" /> {equipo.sede || 'Sede Principal'}
+                  </p>
+                  <p className="text-sm text-gray-500 flex items-center gap-2 col-span-2 italic">
+                    <Calendar size={16} className="text-gray-400 shrink-0" /> {equipo.horario || 'Horario por definir'}
                   </p>
                 </div>
 
@@ -128,7 +131,7 @@ export default async function EquiposPage(props: { searchParams: Promise<{ [key:
                 {/* Botón Ver Plantilla */}
                 <div className="mt-auto pt-5">
                   <Link
-                    href={`/dashboard/equipos/${equipo.categoria}`}
+                    href={`/dashboard/categorias/${equipo.categoria}`}
                     className="flex justify-center w-full rounded-lg border border-gray-200 bg-white text-gray-700 text-sm font-medium py-2.5 hover:bg-gray-50 transition-colors"
                   >
                     Ver Plantilla
@@ -139,7 +142,7 @@ export default async function EquiposPage(props: { searchParams: Promise<{ [key:
           ))}
           {(!equiposFiltrados || equiposFiltrados.length === 0) && (
              <div className="col-span-full py-12 text-center text-gray-500">
-                No se encontraron categorías.
+                No hay categorías registradas actualmente.
              </div>
           )}
         </div>

@@ -22,7 +22,7 @@ import logoutAction from '@/services/actions/logout'
 const ADMIN_LINKS = [
   { name: 'Dashboard', href: '/dashboard/admin', icon: LayoutDashboard },
   { name: 'Usuarios y Roles', href: '/dashboard/admin/usuarios', icon: ShieldCheck },
-  { name: 'Equipos', href: '/dashboard/admin/equipos', icon: Shield },
+  { name: 'Categorías', href: '/dashboard/admin/categorias', icon: Shield },
   { name: 'Jugadores', href: '/dashboard/admin/jugadores', icon: Users },
   { name: 'Partidos', href: '/dashboard/admin/partidos', icon: Trophy },
   { name: 'Entrenamientos', href: '/dashboard/admin/entrenamientos', icon: Activity },
